@@ -2,17 +2,29 @@ package com.ashfaq.orbitplanner.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val OrbitDeepNavy = Color(0xFF07111F)
-val OrbitSpaceNavy = Color(0xFF0D1B2D)
-val OrbitCardNavy = Color(0xFF122238)
-val OrbitCardStroke = Color(0xFF233B58)
+val OrbitBackground = Color(0xFF08111F)
+val OrbitDeepBackground = Color(0xFF050A14)
+val OrbitSurfaceCard = Color(0xFF121D2E)
+val OrbitSurfaceRaised = Color(0xFF18263A)
+val OrbitOutline = Color(0xFF2B3C55)
 
-val OrbitCyan = Color(0xFF41E6F2)
-val OrbitViolet = Color(0xFF9B7CFF)
-val OrbitSunrise = Color(0xFFFFB86C)
-val OrbitMint = Color(0xFF8CF2C4)
+val OrbitPrimaryAccent = Color(0xFF2DD4F8)
+val OrbitSecondaryAccent = Color(0xFFA78BFA)
+val OrbitSuccess = Color(0xFF5EEAD4)
+val OrbitEnergy = Color(0xFFFBBF24)
+val OrbitQuietDanger = Color(0xFFFB7185)
 
-val OrbitTextPrimary = Color(0xFFF4F8FF)
-val OrbitTextSecondary = Color(0xFFB8C7D9)
-val OrbitTextMuted = Color(0xFF7D8FA6)
-val OrbitError = Color(0xFFFF8A8A)
+val OrbitTextPrimary = Color(0xFFEEF7FF)
+val OrbitTextSecondary = Color(0xFFA9B8CC)
+val OrbitTextMuted = Color(0xFF8AA0BB)
+
+// Compatibility aliases for the Phase 2 placeholder components.
+val OrbitDeepNavy = OrbitBackground
+val OrbitSpaceNavy = OrbitDeepBackground
+val OrbitCardNavy = OrbitSurfaceCard
+val OrbitCardStroke = OrbitOutline
+val OrbitCyan = OrbitPrimaryAccent
+val OrbitViolet = OrbitSecondaryAccent
+val OrbitSunrise = OrbitEnergy
+val OrbitMint = OrbitSuccess
+val OrbitError = OrbitQuietDanger
