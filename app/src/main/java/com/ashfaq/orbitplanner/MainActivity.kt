@@ -26,6 +26,7 @@ import com.ashfaq.orbitplanner.ui.screens.TodayTaskPreview
 import com.ashfaq.orbitplanner.ui.screens.TodayScreen
 import com.ashfaq.orbitplanner.ui.screens.WeekTaskPreview
 import com.ashfaq.orbitplanner.ui.screens.WeekScreen
+import com.ashfaq.orbitplanner.ui.screens.YearOrbitSummary
 import com.ashfaq.orbitplanner.ui.screens.YearOrbitScreen
 import com.ashfaq.orbitplanner.ui.theme.OrbitPlannerTheme
 import java.text.SimpleDateFormat
@@ -50,6 +51,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val currentWeekRange = remember { currentWeekRangeMillis() }
             val currentMonthRange = remember { currentMonthRangeMillis() }
+            val currentYearRange = remember { currentYearRangeMillis() }
             val savedTasks by taskViewModel.allTasks.collectAsState(initial = emptyList())
             val savedWeekTasks by remember(currentWeekRange) {
                 taskViewModel.getTasksBetween(
@@ -63,6 +65,12 @@ class MainActivity : ComponentActivity() {
                     endDate = currentMonthRange.endMillis
                 )
             }.collectAsState(initial = emptyList())
+            val savedYearTasks by remember(currentYearRange) {
+                taskViewModel.getTasksBetween(
+                    startDate = currentYearRange.startMillis,
+                    endDate = currentYearRange.endMillis
+                )
+            }.collectAsState(initial = emptyList())
             val todayTaskPreviews = savedTasks.map { task ->
                 task.toTodayTaskPreview()
             }
@@ -72,6 +80,9 @@ class MainActivity : ComponentActivity() {
             val monthTaskPreviews = savedMonthTasks.map { task ->
                 task.toMonthTaskPreview()
             }
+            val yearOrbitSummary = savedYearTasks.toYearOrbitSummary(
+                yearLabel = currentYearRange.label
+            )
 
             OrbitPlannerTheme {
                 OrbitPlannerStaticApp(
@@ -81,6 +92,7 @@ class MainActivity : ComponentActivity() {
                     weekRangeLabel = currentWeekRange.label,
                     monthTasks = monthTaskPreviews,
                     monthLabel = currentMonthRange.label,
+                    yearOrbitSummary = yearOrbitSummary,
                     onAddTask = { title, linkedMission, energyLabel ->
                         taskViewModel.addTaskFromInput(
                             title = title,
@@ -108,6 +120,7 @@ private fun OrbitPlannerStaticApp(
     weekRangeLabel: String = "May 25 - May 31, 2026",
     monthTasks: List<MonthTaskPreview> = emptyList(),
     monthLabel: String = "May 2026",
+    yearOrbitSummary: YearOrbitSummary? = null,
     onAddTask: (title: String, linkedMission: String?, energyLabel: String) -> Unit = { _, _, _ -> },
     onToggleTaskComplete: (taskId: Long) -> Unit = {},
     onDeleteTask: (taskId: Long) -> Unit = {}
@@ -136,6 +149,7 @@ private fun OrbitPlannerStaticApp(
 
         TAB_YEAR -> YearOrbitScreen(
             modifier = modifier,
+            yearSummary = yearOrbitSummary,
             onBottomNavSelected = onTabSelected
         )
 
@@ -168,6 +182,12 @@ private data class WeekRange(
 )
 
 private data class MonthRange(
+    val startMillis: Long,
+    val endMillis: Long,
+    val label: String
+)
+
+private data class YearRange(
     val startMillis: Long,
     val endMillis: Long,
     val label: String
@@ -214,6 +234,52 @@ private fun TaskEntity.toMonthTaskPreview(): MonthTaskPreview {
         meta = "$dayLabel - $missionLabel",
         energyLabel = energyLabel?.takeIf { it.isNotBlank() } ?: "Normal",
         isCompleted = isCompleted
+    )
+}
+
+private fun List<TaskEntity>.toYearOrbitSummary(yearLabel: String): YearOrbitSummary? {
+    if (isEmpty()) return null
+
+    val monthLabels = listOf(
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    )
+    val monthlyTaskCounts = MutableList(12) { 0 }
+
+    forEach { task ->
+        val taskTime = task.plannedDate ?: task.createdAt
+        val taskCalendar = Calendar.getInstance()
+        taskCalendar.timeInMillis = taskTime
+        val monthIndex = taskCalendar.get(Calendar.MONTH)
+        monthlyTaskCounts[monthIndex] = monthlyTaskCounts[monthIndex] + 1
+    }
+
+    val totalTasks = size
+    val completedTasks = count { it.isCompleted }
+    val remainingTasks = totalTasks - completedTasks
+    val completionPercent = completedTasks * 100 / totalTasks
+    val quarterTaskCounts = listOf(
+        monthlyTaskCounts.take(3).sum(),
+        monthlyTaskCounts.drop(3).take(3).sum(),
+        monthlyTaskCounts.drop(6).take(3).sum(),
+        monthlyTaskCounts.drop(9).take(3).sum()
+    )
+    val activeMonthIndex = monthlyTaskCounts
+        .withIndex()
+        .maxByOrNull { it.value }
+        ?.index
+        ?: 0
+
+    return YearOrbitSummary(
+        yearLabel = yearLabel,
+        totalTasks = totalTasks,
+        completedTasks = completedTasks,
+        remainingTasks = remainingTasks,
+        completionPercent = completionPercent,
+        monthlyTaskCounts = monthlyTaskCounts,
+        quarterTaskCounts = quarterTaskCounts,
+        activeMonthLabel = monthLabels[activeMonthIndex],
+        activeMonthTaskCount = monthlyTaskCounts[activeMonthIndex]
     )
 }
 
@@ -268,6 +334,28 @@ private fun currentMonthRangeMillis(): MonthRange {
         startMillis = startMillis,
         endMillis = endMillis,
         label = label
+    )
+}
+
+private fun currentYearRangeMillis(): YearRange {
+    val calendar = Calendar.getInstance()
+    val year = calendar.get(Calendar.YEAR)
+    calendar.set(Calendar.MONTH, Calendar.JANUARY)
+    calendar.set(Calendar.DAY_OF_MONTH, 1)
+    calendar.set(Calendar.HOUR_OF_DAY, 0)
+    calendar.set(Calendar.MINUTE, 0)
+    calendar.set(Calendar.SECOND, 0)
+    calendar.set(Calendar.MILLISECOND, 0)
+    val startMillis = calendar.timeInMillis
+
+    calendar.add(Calendar.YEAR, 1)
+    calendar.add(Calendar.MILLISECOND, -1)
+    val endMillis = calendar.timeInMillis
+
+    return YearRange(
+        startMillis = startMillis,
+        endMillis = endMillis,
+        label = year.toString()
     )
 }
 

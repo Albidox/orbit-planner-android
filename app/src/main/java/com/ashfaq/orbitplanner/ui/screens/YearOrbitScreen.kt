@@ -60,9 +60,22 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
+data class YearOrbitSummary(
+    val yearLabel: String,
+    val totalTasks: Int,
+    val completedTasks: Int,
+    val remainingTasks: Int,
+    val completionPercent: Int,
+    val monthlyTaskCounts: List<Int>,
+    val quarterTaskCounts: List<Int>,
+    val activeMonthLabel: String,
+    val activeMonthTaskCount: Int
+)
+
 @Composable
 fun YearOrbitScreen(
     modifier: Modifier = Modifier,
+    yearSummary: YearOrbitSummary? = null,
     onBottomNavSelected: (String) -> Unit = {}
 ) {
     Box(
@@ -79,15 +92,15 @@ fun YearOrbitScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 22.dp, vertical = 18.dp)
         ) {
-            YearOrbitHeader()
+            YearOrbitHeader(yearSummary = yearSummary)
             Spacer(modifier = Modifier.height(18.dp))
-            YearlyGoalSummaryCard()
+            YearlyGoalSummaryCard(yearSummary = yearSummary)
             Spacer(modifier = Modifier.height(20.dp))
-            YearOrbitVisualCard()
+            YearOrbitVisualCard(yearSummary = yearSummary)
             Spacer(modifier = Modifier.height(18.dp))
-            SelectedMonthFocusCard()
+            SelectedMonthFocusCard(yearSummary = yearSummary)
             Spacer(modifier = Modifier.height(14.dp))
-            YearProgressInsightCard()
+            YearProgressInsightCard(yearSummary = yearSummary)
             Spacer(modifier = Modifier.height(18.dp))
             OrbitBottomNavigation(
                 selectedLabel = "Year",
@@ -134,7 +147,10 @@ private fun BoxScope.YearOrbitAmbientBackground() {
 }
 
 @Composable
-private fun YearOrbitHeader(modifier: Modifier = Modifier) {
+private fun YearOrbitHeader(
+    yearSummary: YearOrbitSummary?,
+    modifier: Modifier = Modifier
+) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = "Year Orbit",
@@ -147,7 +163,11 @@ private fun YearOrbitHeader(modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "2026 Goal: Become job-ready Android developer",
+            text = if (yearSummary == null) {
+                "2026 Goal: Become job-ready Android developer"
+            } else {
+                "${yearSummary.yearLabel} Orbit: ${yearSummary.totalTasks} local tasks planned"
+            },
             color = OrbitTextSecondary,
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontSize = 11.sp,
@@ -158,7 +178,10 @@ private fun YearOrbitHeader(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun YearlyGoalSummaryCard(modifier: Modifier = Modifier) {
+private fun YearlyGoalSummaryCard(
+    yearSummary: YearOrbitSummary?,
+    modifier: Modifier = Modifier
+) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),
@@ -182,7 +205,11 @@ private fun YearlyGoalSummaryCard(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Build a calm career system",
+                    text = if (yearSummary == null) {
+                        "Build a calm career system"
+                    } else {
+                        "Local year task flow"
+                    },
                     color = OrbitTextPrimary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -192,15 +219,31 @@ private fun YearlyGoalSummaryCard(modifier: Modifier = Modifier) {
                         lineHeight = 19.sp
                     )
                 )
+                if (yearSummary != null) {
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Text(
+                        text = "${yearSummary.completedTasks} complete, ${yearSummary.remainingTasks} still open",
+                        color = OrbitTextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 10.sp,
+                            lineHeight = 13.sp
+                        )
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(14.dp))
-            YearProgressChip()
+            YearProgressChip(yearSummary = yearSummary)
         }
     }
 }
 
 @Composable
-private fun YearProgressChip(modifier: Modifier = Modifier) {
+private fun YearProgressChip(
+    yearSummary: YearOrbitSummary?,
+    modifier: Modifier = Modifier
+) {
     Surface(
         modifier = modifier.height(28.dp),
         shape = RoundedCornerShape(14.dp),
@@ -212,7 +255,11 @@ private fun YearProgressChip(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(horizontal = 11.dp)
         ) {
             Text(
-                text = "42% year",
+                text = if (yearSummary == null) {
+                    "42% year"
+                } else {
+                    "${yearSummary.completionPercent}% done"
+                },
                 color = OrbitPrimaryAccent,
                 maxLines = 1,
                 style = MaterialTheme.typography.labelMedium.copy(
@@ -226,7 +273,10 @@ private fun YearProgressChip(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun YearOrbitVisualCard(modifier: Modifier = Modifier) {
+private fun YearOrbitVisualCard(
+    yearSummary: YearOrbitSummary?,
+    modifier: Modifier = Modifier
+) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
@@ -238,10 +288,14 @@ private fun YearOrbitVisualCard(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            YearOrbitRing()
+            YearOrbitRing(yearSummary = yearSummary)
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "4 quarters + 12 month detail nodes",
+                text = if (yearSummary == null) {
+                    "4 quarters + 12 month detail nodes"
+                } else {
+                    "${yearSummary.totalTasks} tasks across 4 quarters and 12 month nodes"
+                },
                 color = OrbitTextSecondary,
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyMedium.copy(
@@ -255,6 +309,7 @@ private fun YearOrbitVisualCard(modifier: Modifier = Modifier) {
 
 @Composable
 fun YearOrbitRing(
+    yearSummary: YearOrbitSummary? = null,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -294,35 +349,61 @@ fun YearOrbitRing(
         QuarterArcPreview(
             color = OrbitPrimaryAccent,
             startAngle = -88f,
+            taskCount = yearSummary?.quarterTaskCounts?.getOrNull(0),
             modifier = Modifier.matchParentSize()
         )
         QuarterArcPreview(
             color = OrbitSecondaryAccent,
             startAngle = 2f,
+            taskCount = yearSummary?.quarterTaskCounts?.getOrNull(1),
             modifier = Modifier.matchParentSize()
         )
         QuarterArcPreview(
             color = OrbitSuccess,
             startAngle = 92f,
+            taskCount = yearSummary?.quarterTaskCounts?.getOrNull(2),
             modifier = Modifier.matchParentSize()
         )
         QuarterArcPreview(
             color = OrbitEnergy,
             startAngle = 182f,
+            taskCount = yearSummary?.quarterTaskCounts?.getOrNull(3),
             modifier = Modifier.matchParentSize()
         )
 
-        QuarterLabel(text = "Q1", color = OrbitPrimaryAccent, x = 139.dp, y = 31.dp)
-        QuarterLabel(text = "Q2", color = OrbitSecondaryAccent, x = 209.dp, y = 114.dp)
-        QuarterLabel(text = "Q3", color = OrbitSuccess, x = 139.dp, y = 202.dp)
-        QuarterLabel(text = "Q4", color = OrbitEnergy, x = 26.dp, y = 114.dp)
+        QuarterLabel(
+            text = quarterLabel("Q1", yearSummary?.quarterTaskCounts?.getOrNull(0)),
+            color = OrbitPrimaryAccent,
+            x = 139.dp,
+            y = 31.dp
+        )
+        QuarterLabel(
+            text = quarterLabel("Q2", yearSummary?.quarterTaskCounts?.getOrNull(1)),
+            color = OrbitSecondaryAccent,
+            x = 209.dp,
+            y = 114.dp
+        )
+        QuarterLabel(
+            text = quarterLabel("Q3", yearSummary?.quarterTaskCounts?.getOrNull(2)),
+            color = OrbitSuccess,
+            x = 139.dp,
+            y = 202.dp
+        )
+        QuarterLabel(
+            text = quarterLabel("Q4", yearSummary?.quarterTaskCounts?.getOrNull(3)),
+            color = OrbitEnergy,
+            x = 26.dp,
+            y = 114.dp
+        )
 
         val monthLabels = listOf("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D")
+        val activeMonthIndex = activeMonthIndex(yearSummary)
         monthLabels.forEachIndexed { index, label ->
             MonthNode(
                 label = label,
                 angleDegrees = -90f + index * 30f,
-                selected = index == 4
+                selected = index == activeMonthIndex,
+                taskCount = yearSummary?.monthlyTaskCounts?.getOrNull(index)
             )
         }
 
@@ -339,7 +420,7 @@ fun YearOrbitRing(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "2026",
+                    text = yearSummary?.yearLabel ?: "2026",
                     color = OrbitTextPrimary,
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.titleLarge.copy(
@@ -349,7 +430,11 @@ fun YearOrbitRing(
                     )
                 )
                 Text(
-                    text = "Life Orbit",
+                    text = if (yearSummary == null) {
+                        "Life Orbit"
+                    } else {
+                        "${yearSummary.totalTasks} tasks"
+                    },
                     color = OrbitTextSecondary,
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.labelMedium.copy(
@@ -367,6 +452,7 @@ fun YearOrbitRing(
 fun QuarterArcPreview(
     color: Color,
     startAngle: Float,
+    taskCount: Int? = null,
     modifier: Modifier = Modifier
 ) {
     Canvas(modifier = modifier) {
@@ -378,7 +464,7 @@ fun QuarterArcPreview(
         )
 
         drawArc(
-            color = color.copy(alpha = 0.93f),
+            color = color.copy(alpha = if (taskCount == null || taskCount > 0) 0.93f else 0.28f),
             startAngle = startAngle,
             sweepAngle = 74f,
             useCenter = false,
@@ -394,16 +480,27 @@ fun MonthNode(
     label: String,
     angleDegrees: Float,
     selected: Boolean,
+    taskCount: Int? = null,
     modifier: Modifier = Modifier
 ) {
-    val nodeSize = if (selected) 16.dp else 13.dp
+    val hasTasks = taskCount != null && taskCount > 0
+    val nodeSize = when {
+        selected -> 16.dp
+        hasTasks -> 14.dp
+        else -> 13.dp
+    }
     val nodeOffset = orbitNodeOffset(
         angleDegrees = angleDegrees,
         radius = 112.dp,
         nodeSize = nodeSize
     )
-    val nodeColor = if (selected) OrbitPrimaryAccent else OrbitSurfaceRaised
-    val textColor = if (selected) OrbitBackground else OrbitTextSecondary
+    val nodeColor = when {
+        selected -> OrbitPrimaryAccent
+        hasTasks -> OrbitSecondaryAccent.copy(alpha = 0.72f)
+        else -> OrbitSurfaceRaised
+    }
+    val textColor = if (selected || hasTasks) OrbitBackground else OrbitTextSecondary
+    val nodeText = if (hasTasks) taskCount.coerceAtMost(9).toString() else label
 
     Box(
         contentAlignment = Alignment.Center,
@@ -413,12 +510,16 @@ fun MonthNode(
             .background(nodeColor, CircleShape)
             .border(
                 width = 1.dp,
-                color = if (selected) OrbitPrimaryAccent else OrbitTextMuted.copy(alpha = 0.56f),
+                color = when {
+                    selected -> OrbitPrimaryAccent
+                    hasTasks -> OrbitSecondaryAccent
+                    else -> OrbitTextMuted.copy(alpha = 0.56f)
+                },
                 shape = CircleShape
             )
     ) {
         Text(
-            text = label,
+            text = nodeText,
             color = textColor,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.labelMedium.copy(
@@ -449,12 +550,15 @@ private fun QuarterLabel(
         ),
         modifier = modifier
             .offset(x = x, y = y)
-            .width(28.dp)
+            .width(42.dp)
     )
 }
 
 @Composable
-fun SelectedMonthFocusCard(modifier: Modifier = Modifier) {
+fun SelectedMonthFocusCard(
+    yearSummary: YearOrbitSummary? = null,
+    modifier: Modifier = Modifier
+) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -468,7 +572,11 @@ fun SelectedMonthFocusCard(modifier: Modifier = Modifier) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "MAY FOCUS",
+                    text = if (yearSummary == null) {
+                        "MAY FOCUS"
+                    } else {
+                        "${yearSummary.activeMonthLabel.uppercase()} ACTIVITY"
+                    },
                     color = OrbitPrimaryAccent,
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontSize = 9.sp,
@@ -478,7 +586,11 @@ fun SelectedMonthFocusCard(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(7.dp))
                 Text(
-                    text = "Portfolio foundations",
+                    text = if (yearSummary == null) {
+                        "Portfolio foundations"
+                    } else {
+                        "${yearSummary.activeMonthTaskCount} tasks in the busiest month"
+                    },
                     color = OrbitTextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -490,7 +602,11 @@ fun SelectedMonthFocusCard(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Weekly Mission: Finish case-study draft",
+                    text = if (yearSummary == null) {
+                        "Weekly Mission: Finish case-study draft"
+                    } else {
+                        "${yearSummary.completedTasks} complete across ${yearSummary.yearLabel}"
+                    },
                     color = OrbitTextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -513,7 +629,7 @@ fun SelectedMonthFocusCard(modifier: Modifier = Modifier) {
                         .padding(horizontal = 11.dp)
                 ) {
                     Text(
-                        text = "Open Today",
+                        text = if (yearSummary == null) "Open Today" else "${yearSummary.remainingTasks} open",
                         color = OrbitBackground,
                         maxLines = 1,
                         style = MaterialTheme.typography.labelMedium.copy(
@@ -529,7 +645,10 @@ fun SelectedMonthFocusCard(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun YearProgressInsightCard(modifier: Modifier = Modifier) {
+fun YearProgressInsightCard(
+    yearSummary: YearOrbitSummary? = null,
+    modifier: Modifier = Modifier
+) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -552,7 +671,11 @@ fun YearProgressInsightCard(modifier: Modifier = Modifier) {
             )
             Spacer(modifier = Modifier.height(5.dp))
             Text(
-                text = "Rescued tasks still count toward the bigger orbit.",
+                text = if (yearSummary == null) {
+                    "Rescued tasks still count toward the bigger orbit."
+                } else {
+                    "${yearSummary.completionPercent}% complete. Month nodes glow where tasks exist."
+                },
                 color = OrbitTextSecondary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -563,6 +686,20 @@ fun YearProgressInsightCard(modifier: Modifier = Modifier) {
             )
         }
     }
+}
+
+private fun quarterLabel(label: String, taskCount: Int?): String {
+    return if (taskCount == null) label else "$label $taskCount"
+}
+
+private fun activeMonthIndex(yearSummary: YearOrbitSummary?): Int {
+    if (yearSummary == null) return 4
+
+    return yearSummary.monthlyTaskCounts
+        .withIndex()
+        .maxByOrNull { it.value }
+        ?.index
+        ?: 0
 }
 
 private data class NodeOffset(
