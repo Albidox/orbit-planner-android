@@ -52,9 +52,18 @@ import com.ashfaq.orbitplanner.ui.theme.OrbitTextMuted
 import com.ashfaq.orbitplanner.ui.theme.OrbitTextPrimary
 import com.ashfaq.orbitplanner.ui.theme.OrbitTextSecondary
 
+data class MonthTaskPreview(
+    val title: String,
+    val meta: String,
+    val energyLabel: String,
+    val isCompleted: Boolean
+)
+
 @Composable
 fun MonthScreen(
     modifier: Modifier = Modifier,
+    monthLabel: String = "May 2026",
+    taskPreviews: List<MonthTaskPreview> = emptyList(),
     onBottomNavSelected: (String) -> Unit = {}
 ) {
     Box(
@@ -71,17 +80,17 @@ fun MonthScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 22.dp, vertical = 18.dp)
         ) {
-            MonthHeader()
+            MonthHeader(monthLabel = monthLabel)
             Spacer(modifier = Modifier.height(18.dp))
-            MonthlyFocusSummaryCard()
+            MonthlyFocusSummaryCard(taskPreviews = taskPreviews)
             Spacer(modifier = Modifier.height(20.dp))
             MonthFocusGridCard()
             Spacer(modifier = Modifier.height(22.dp))
-            WeeklyMissionPreviewSection()
+            WeeklyMissionPreviewSection(taskPreviews = taskPreviews)
             Spacer(modifier = Modifier.height(18.dp))
             YearOrbitConnectionCard()
             Spacer(modifier = Modifier.height(14.dp))
-            MonthProgressEnergyCard()
+            MonthProgressEnergyCard(taskPreviews = taskPreviews)
             Spacer(modifier = Modifier.height(18.dp))
             OrbitBottomNavigation(
                 selectedLabel = "Month",
@@ -128,7 +137,10 @@ private fun BoxScope.MonthAmbientBackground() {
 }
 
 @Composable
-private fun MonthHeader(modifier: Modifier = Modifier) {
+private fun MonthHeader(
+    monthLabel: String,
+    modifier: Modifier = Modifier
+) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = "Month Focus",
@@ -141,7 +153,7 @@ private fun MonthHeader(modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "May 2026",
+            text = monthLabel,
             color = OrbitTextSecondary,
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontSize = 11.sp,
@@ -152,7 +164,16 @@ private fun MonthHeader(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun MonthlyFocusSummaryCard(modifier: Modifier = Modifier) {
+private fun MonthlyFocusSummaryCard(
+    modifier: Modifier = Modifier,
+    taskPreviews: List<MonthTaskPreview> = emptyList()
+) {
+    val hasRoomTasks = taskPreviews.isNotEmpty()
+    val totalTasks = taskPreviews.size
+    val completedTasks = taskPreviews.count { it.isCompleted }
+    val remainingTasks = totalTasks - completedTasks
+    val completionPercent = monthCompletionPercent(taskPreviews)
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -176,7 +197,11 @@ private fun MonthlyFocusSummaryCard(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Portfolio foundations",
+                    text = if (hasRoomTasks) {
+                        "Local month task flow"
+                    } else {
+                        "Portfolio foundations"
+                    },
                     color = OrbitTextPrimary,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontSize = 19.sp,
@@ -186,7 +211,11 @@ private fun MonthlyFocusSummaryCard(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Turn one Android project into a clear proof-of-work story.",
+                    text = if (hasRoomTasks) {
+                        "$completedTasks of $totalTasks tasks complete. Keep the month calm and visible."
+                    } else {
+                        "Turn one Android project into a clear proof-of-work story."
+                    },
                     color = OrbitTextSecondary,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 11.sp,
@@ -196,25 +225,40 @@ private fun MonthlyFocusSummaryCard(modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MonthChip(
-                        text = "Year: Calm career system",
+                        text = if (hasRoomTasks) {
+                            "$remainingTasks open"
+                        } else {
+                            "Year: Calm career system"
+                        },
                         color = OrbitSecondaryAccent,
                         modifier = Modifier.weight(1.5f)
                     )
                     MonthChip(
-                        text = "42% month",
+                        text = if (hasRoomTasks) {
+                            "$completionPercent% done"
+                        } else {
+                            "42% month"
+                        },
                         color = OrbitPrimaryAccent,
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
             Spacer(modifier = Modifier.width(14.dp))
-            MonthFocusProgressRing()
+            MonthFocusProgressRing(
+                progressPercent = if (hasRoomTasks) completionPercent else 42,
+                label = if (hasRoomTasks) "saved" else "focus"
+            )
         }
     }
 }
 
 @Composable
-private fun MonthFocusProgressRing(modifier: Modifier = Modifier) {
+private fun MonthFocusProgressRing(
+    modifier: Modifier = Modifier,
+    progressPercent: Int = 42,
+    label: String = "focus"
+) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier.size(76.dp)
@@ -233,14 +277,14 @@ private fun MonthFocusProgressRing(modifier: Modifier = Modifier) {
             drawArc(
                 color = OrbitSecondaryAccent,
                 startAngle = -90f,
-                sweepAngle = 152f,
+                sweepAngle = 360f * progressPercent / 100f,
                 useCenter = false,
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
             )
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "42%",
+                text = "$progressPercent%",
                 color = OrbitTextPrimary,
                 style = MaterialTheme.typography.labelLarge.copy(
                     fontSize = 11.sp,
@@ -249,7 +293,7 @@ private fun MonthFocusProgressRing(modifier: Modifier = Modifier) {
                 )
             )
             Text(
-                text = "focus",
+                text = label,
                 color = OrbitTextMuted,
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontSize = 9.sp,
@@ -376,10 +420,19 @@ private fun MonthDayCell(
 }
 
 @Composable
-private fun WeeklyMissionPreviewSection(modifier: Modifier = Modifier) {
+private fun WeeklyMissionPreviewSection(
+    modifier: Modifier = Modifier,
+    taskPreviews: List<MonthTaskPreview> = emptyList()
+) {
+    val hasRoomTasks = taskPreviews.isNotEmpty()
+
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = "Weekly missions",
+            text = if (hasRoomTasks) {
+                "Monthly tasks"
+            } else {
+                "Weekly missions"
+            },
             color = OrbitTextPrimary,
             style = MaterialTheme.typography.titleMedium.copy(
                 fontSize = 17.sp,
@@ -388,7 +441,11 @@ private fun WeeklyMissionPreviewSection(modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.height(3.dp))
         Text(
-            text = "Static preview of how this month breaks down",
+            text = if (hasRoomTasks) {
+                "Saved local tasks planned for this month"
+            } else {
+                "Static preview of how this month breaks down"
+            },
             color = OrbitTextMuted,
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontSize = 10.sp,
@@ -396,6 +453,30 @@ private fun WeeklyMissionPreviewSection(modifier: Modifier = Modifier) {
             )
         )
         Spacer(modifier = Modifier.height(16.dp))
+        if (hasRoomTasks) {
+            taskPreviews.take(4).forEachIndexed { index, task ->
+                if (index > 0) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+                WeeklyMissionPreviewCard(
+                    marker = "T${index + 1}",
+                    title = task.title,
+                    meta = if (task.isCompleted) {
+                        "${task.meta} - complete"
+                    } else {
+                        task.meta
+                    },
+                    color = task.monthStatusColor()
+                )
+            }
+        } else {
+            StaticWeeklyMissionPreviewCards()
+        }
+    }
+}
+
+@Composable
+private fun StaticWeeklyMissionPreviewCards() {
         WeeklyMissionPreviewCard(
             marker = "W1",
             title = "Collect project proof",
@@ -416,7 +497,23 @@ private fun WeeklyMissionPreviewSection(modifier: Modifier = Modifier) {
             meta = "Layout, copy, final review",
             color = OrbitEnergy
         )
+}
+
+private fun MonthTaskPreview.monthStatusColor(): Color {
+    if (isCompleted) return OrbitTextMuted
+
+    return when {
+        energyLabel.contains("low", ignoreCase = true) -> OrbitSuccess
+        energyLabel.contains("high", ignoreCase = true) -> OrbitEnergy
+        else -> OrbitPrimaryAccent
     }
+}
+
+private fun monthCompletionPercent(taskPreviews: List<MonthTaskPreview>): Int {
+    if (taskPreviews.isEmpty()) return 0
+
+    val completedTasks = taskPreviews.count { it.isCompleted }
+    return completedTasks * 100 / taskPreviews.size
 }
 
 @Composable
@@ -562,7 +659,15 @@ private fun MonthOrbitIcon() {
 }
 
 @Composable
-private fun MonthProgressEnergyCard(modifier: Modifier = Modifier) {
+private fun MonthProgressEnergyCard(
+    modifier: Modifier = Modifier,
+    taskPreviews: List<MonthTaskPreview> = emptyList()
+) {
+    val hasRoomTasks = taskPreviews.isNotEmpty()
+    val totalTasks = taskPreviews.size
+    val completedTasks = taskPreviews.count { it.isCompleted }
+    val remainingTasks = totalTasks - completedTasks
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -587,7 +692,11 @@ private fun MonthProgressEnergyCard(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(5.dp))
                 Text(
-                    text = "Keep high-energy work near mission days, not every day.",
+                    text = if (hasRoomTasks) {
+                        "$completedTasks complete, $remainingTasks still open this month."
+                    } else {
+                        "Keep high-energy work near mission days, not every day."
+                    },
                     color = OrbitTextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -598,7 +707,10 @@ private fun MonthProgressEnergyCard(modifier: Modifier = Modifier) {
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
-            MonthChip(text = "Balanced", color = OrbitSuccess)
+            MonthChip(
+                text = if (hasRoomTasks) "$totalTasks tasks" else "Balanced",
+                color = OrbitSuccess
+            )
         }
     }
 }

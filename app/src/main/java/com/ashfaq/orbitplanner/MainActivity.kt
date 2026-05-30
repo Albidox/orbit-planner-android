@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.ashfaq.orbitplanner.data.local.DatabaseProvider
 import com.ashfaq.orbitplanner.data.local.TaskEntity
 import com.ashfaq.orbitplanner.data.repository.TaskRepository
+import com.ashfaq.orbitplanner.ui.screens.MonthTaskPreview
 import com.ashfaq.orbitplanner.ui.screens.MonthScreen
 import com.ashfaq.orbitplanner.ui.screens.SettingsPlaceholderScreen
 import com.ashfaq.orbitplanner.ui.screens.TaskViewModel
@@ -48,11 +49,18 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val currentWeekRange = remember { currentWeekRangeMillis() }
+            val currentMonthRange = remember { currentMonthRangeMillis() }
             val savedTasks by taskViewModel.allTasks.collectAsState(initial = emptyList())
             val savedWeekTasks by remember(currentWeekRange) {
                 taskViewModel.getTasksBetween(
                     startDate = currentWeekRange.startMillis,
                     endDate = currentWeekRange.endMillis
+                )
+            }.collectAsState(initial = emptyList())
+            val savedMonthTasks by remember(currentMonthRange) {
+                taskViewModel.getTasksBetween(
+                    startDate = currentMonthRange.startMillis,
+                    endDate = currentMonthRange.endMillis
                 )
             }.collectAsState(initial = emptyList())
             val todayTaskPreviews = savedTasks.map { task ->
@@ -61,6 +69,9 @@ class MainActivity : ComponentActivity() {
             val weekTaskPreviews = savedWeekTasks.map { task ->
                 task.toWeekTaskPreview()
             }
+            val monthTaskPreviews = savedMonthTasks.map { task ->
+                task.toMonthTaskPreview()
+            }
 
             OrbitPlannerTheme {
                 OrbitPlannerStaticApp(
@@ -68,6 +79,8 @@ class MainActivity : ComponentActivity() {
                     todayTasks = todayTaskPreviews,
                     weekTasks = weekTaskPreviews,
                     weekRangeLabel = currentWeekRange.label,
+                    monthTasks = monthTaskPreviews,
+                    monthLabel = currentMonthRange.label,
                     onAddTask = { title, linkedMission, energyLabel ->
                         taskViewModel.addTaskFromInput(
                             title = title,
@@ -93,6 +106,8 @@ private fun OrbitPlannerStaticApp(
     todayTasks: List<TodayTaskPreview> = emptyList(),
     weekTasks: List<WeekTaskPreview> = emptyList(),
     weekRangeLabel: String = "May 25 - May 31, 2026",
+    monthTasks: List<MonthTaskPreview> = emptyList(),
+    monthLabel: String = "May 2026",
     onAddTask: (title: String, linkedMission: String?, energyLabel: String) -> Unit = { _, _, _ -> },
     onToggleTaskComplete: (taskId: Long) -> Unit = {},
     onDeleteTask: (taskId: Long) -> Unit = {}
@@ -114,6 +129,8 @@ private fun OrbitPlannerStaticApp(
 
         TAB_MONTH -> MonthScreen(
             modifier = modifier,
+            monthLabel = monthLabel,
+            taskPreviews = monthTasks,
             onBottomNavSelected = onTabSelected
         )
 
@@ -150,6 +167,12 @@ private data class WeekRange(
     val label: String
 )
 
+private data class MonthRange(
+    val startMillis: Long,
+    val endMillis: Long,
+    val label: String
+)
+
 private fun TaskEntity.toTodayTaskPreview(): TodayTaskPreview {
     val missionLabel = linkedMission?.takeIf { it.isNotBlank() }
         ?: orbitLevel?.takeIf { it.isNotBlank() }
@@ -172,6 +195,21 @@ private fun TaskEntity.toWeekTaskPreview(): WeekTaskPreview {
         ?: "Local planner task"
 
     return WeekTaskPreview(
+        title = title,
+        meta = "$dayLabel - $missionLabel",
+        energyLabel = energyLabel?.takeIf { it.isNotBlank() } ?: "Normal",
+        isCompleted = isCompleted
+    )
+}
+
+private fun TaskEntity.toMonthTaskPreview(): MonthTaskPreview {
+    val taskTime = plannedDate ?: createdAt
+    val dayLabel = SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(taskTime))
+    val missionLabel = linkedMission?.takeIf { it.isNotBlank() }
+        ?: orbitLevel?.takeIf { it.isNotBlank() }
+        ?: "Local planner task"
+
+    return MonthTaskPreview(
         title = title,
         meta = "$dayLabel - $missionLabel",
         energyLabel = energyLabel?.takeIf { it.isNotBlank() } ?: "Normal",
@@ -204,6 +242,29 @@ private fun currentWeekRangeMillis(): WeekRange {
     val label = "${formatter.format(startDate)} - ${formatter.format(endDate)}, ${yearFormatter.format(endDate)}"
 
     return WeekRange(
+        startMillis = startMillis,
+        endMillis = endMillis,
+        label = label
+    )
+}
+
+private fun currentMonthRangeMillis(): MonthRange {
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.DAY_OF_MONTH, 1)
+    calendar.set(Calendar.HOUR_OF_DAY, 0)
+    calendar.set(Calendar.MINUTE, 0)
+    calendar.set(Calendar.SECOND, 0)
+    calendar.set(Calendar.MILLISECOND, 0)
+    val startMillis = calendar.timeInMillis
+    val monthDate = calendar.time
+
+    calendar.add(Calendar.MONTH, 1)
+    calendar.add(Calendar.MILLISECOND, -1)
+    val endMillis = calendar.timeInMillis
+
+    val label = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(monthDate)
+
+    return MonthRange(
         startMillis = startMillis,
         endMillis = endMillis,
         label = label
