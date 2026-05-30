@@ -45,8 +45,6 @@ class MainActivity : ComponentActivity() {
             this,
             TaskViewModelFactory(taskRepository)
         )[TaskViewModel::class.java]
-        // Temporary Phase 5E testing seed. Remove this when real Add Task UI exists.
-        taskViewModel.seedSampleTasksForTestingIfEmpty()
 
         setContent {
             val currentWeekRange = remember { currentWeekRangeMillis() }

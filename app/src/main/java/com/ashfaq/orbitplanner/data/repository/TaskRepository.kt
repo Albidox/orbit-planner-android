@@ -19,10 +19,6 @@ class TaskRepository(
         return taskDao.getTasksBetween(startDate, endDate)
     }
 
-    suspend fun getTaskCount(): Int {
-        return taskDao.getTaskCount()
-    }
-
     suspend fun getTaskById(taskId: Long): TaskEntity? {
         return taskDao.getTaskById(taskId)
     }

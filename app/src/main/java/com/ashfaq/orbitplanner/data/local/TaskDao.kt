@@ -32,9 +32,6 @@ interface TaskDao {
     )
     fun getTasksBetween(startDate: Long, endDate: Long): Flow<List<TaskEntity>>
 
-    @Query("SELECT COUNT(*) FROM tasks")
-    suspend fun getTaskCount(): Int
-
     @Query("SELECT * FROM tasks WHERE id = :taskId LIMIT 1")
     suspend fun getTaskById(taskId: Long): TaskEntity?
 
