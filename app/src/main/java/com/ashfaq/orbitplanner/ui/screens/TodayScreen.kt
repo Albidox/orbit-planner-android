@@ -53,9 +53,16 @@ import com.ashfaq.orbitplanner.ui.theme.OrbitTextMuted
 import com.ashfaq.orbitplanner.ui.theme.OrbitTextPrimary
 import com.ashfaq.orbitplanner.ui.theme.OrbitTextSecondary
 
+data class TodayTaskPreview(
+    val title: String,
+    val linkedMission: String,
+    val energyLabel: String
+)
+
 @Composable
 fun TodayScreen(
     modifier: Modifier = Modifier,
+    taskPreviews: List<TodayTaskPreview> = emptyList(),
     onBottomNavSelected: (String) -> Unit = {}
 ) {
     Box(
@@ -78,7 +85,7 @@ fun TodayScreen(
             Spacer(modifier = Modifier.height(20.dp))
             MissionSummaryCard()
             Spacer(modifier = Modifier.height(24.dp))
-            TaskListSection()
+            TaskListSection(taskPreviews = taskPreviews)
             Spacer(modifier = Modifier.height(20.dp))
             RescueEntryCard()
             Spacer(modifier = Modifier.height(14.dp))
@@ -309,7 +316,12 @@ fun OrbitProgressCard(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun TaskListSection(modifier: Modifier = Modifier) {
+private fun TaskListSection(
+    modifier: Modifier = Modifier,
+    taskPreviews: List<TodayTaskPreview> = emptyList()
+) {
+    val hasSavedTasks = taskPreviews.isNotEmpty()
+
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -327,7 +339,11 @@ private fun TaskListSection(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Minimal cards: title, link, energy/status",
+                    text = if (hasSavedTasks) {
+                        "Saved local tasks from Room"
+                    } else {
+                        "Sample cards: title, link, energy/status"
+                    },
                     color = OrbitTextMuted,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 10.sp,
@@ -342,19 +358,48 @@ private fun TaskListSection(modifier: Modifier = Modifier) {
             )
         }
         Spacer(modifier = Modifier.height(18.dp))
-        TaskPreviewCard(
-            title = "Draft project summary",
-            link = "Mission: Portfolio foundations",
-            status = "Normal",
-            statusColor = OrbitPrimaryAccent
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        TaskPreviewCard(
-            title = "Review Kotlin notes",
-            link = "Goal: Android career growth",
-            status = "Low",
-            statusColor = OrbitEnergy
-        )
+        if (hasSavedTasks) {
+            taskPreviews.forEachIndexed { index, task ->
+                if (index > 0) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+                TaskPreviewCard(
+                    title = task.title,
+                    link = task.linkedMission,
+                    status = task.energyLabel,
+                    statusColor = task.taskStatusColor()
+                )
+            }
+        } else {
+            StaticSampleTaskCards()
+        }
+    }
+}
+
+@Composable
+private fun StaticSampleTaskCards() {
+    TaskPreviewCard(
+        title = "Draft project summary",
+        link = "Mission: Portfolio foundations",
+        status = "Normal",
+        statusColor = OrbitPrimaryAccent
+    )
+    Spacer(modifier = Modifier.height(12.dp))
+    TaskPreviewCard(
+        title = "Review Kotlin notes",
+        link = "Goal: Android career growth",
+        status = "Low",
+        statusColor = OrbitEnergy
+    )
+}
+
+private fun TodayTaskPreview.taskStatusColor(): Color {
+    val label = energyLabel.orEmpty()
+
+    return when {
+        label.contains("low", ignoreCase = true) -> OrbitEnergy
+        label.contains("high", ignoreCase = true) -> OrbitSecondaryAccent
+        else -> OrbitPrimaryAccent
     }
 }
 
