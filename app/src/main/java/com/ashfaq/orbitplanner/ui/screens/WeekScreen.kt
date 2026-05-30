@@ -52,9 +52,18 @@ import com.ashfaq.orbitplanner.ui.theme.OrbitTextMuted
 import com.ashfaq.orbitplanner.ui.theme.OrbitTextPrimary
 import com.ashfaq.orbitplanner.ui.theme.OrbitTextSecondary
 
+data class WeekTaskPreview(
+    val title: String,
+    val meta: String,
+    val energyLabel: String,
+    val isCompleted: Boolean
+)
+
 @Composable
 fun WeekScreen(
     modifier: Modifier = Modifier,
+    weekRangeLabel: String = "May 25 - May 31, 2026",
+    taskPreviews: List<WeekTaskPreview> = emptyList(),
     onBottomNavSelected: (String) -> Unit = {}
 ) {
     Box(
@@ -71,13 +80,13 @@ fun WeekScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 22.dp, vertical = 18.dp)
         ) {
-            WeekHeader()
+            WeekHeader(weekRangeLabel = weekRangeLabel)
             Spacer(modifier = Modifier.height(18.dp))
             WeeklyMissionSummaryCard()
             Spacer(modifier = Modifier.height(20.dp))
             WeekStripCard()
             Spacer(modifier = Modifier.height(22.dp))
-            WeekTaskPreviewSection()
+            WeekTaskPreviewSection(taskPreviews = taskPreviews)
             Spacer(modifier = Modifier.height(18.dp))
             MonthlyFocusConnectionCard()
             Spacer(modifier = Modifier.height(14.dp))
@@ -128,7 +137,10 @@ private fun BoxScope.WeekAmbientBackground() {
 }
 
 @Composable
-private fun WeekHeader(modifier: Modifier = Modifier) {
+private fun WeekHeader(
+    weekRangeLabel: String,
+    modifier: Modifier = Modifier
+) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = "Week Mission",
@@ -141,7 +153,7 @@ private fun WeekHeader(modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "May 25 - May 31, 2026",
+            text = weekRangeLabel,
             color = OrbitTextSecondary,
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontSize = 11.sp,
@@ -363,7 +375,12 @@ private fun WeekDayNode(
 }
 
 @Composable
-private fun WeekTaskPreviewSection(modifier: Modifier = Modifier) {
+private fun WeekTaskPreviewSection(
+    modifier: Modifier = Modifier,
+    taskPreviews: List<WeekTaskPreview> = emptyList()
+) {
+    val hasRoomTasks = taskPreviews.isNotEmpty()
+
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = "Mission tasks",
@@ -375,7 +392,11 @@ private fun WeekTaskPreviewSection(modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.height(3.dp))
         Text(
-            text = "Static preview of work connected to this week",
+            text = if (hasRoomTasks) {
+                "Saved local tasks planned for this week"
+            } else {
+                "Static preview of work connected to this week"
+            },
             color = OrbitTextMuted,
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontSize = 10.sp,
@@ -383,6 +404,26 @@ private fun WeekTaskPreviewSection(modifier: Modifier = Modifier) {
             )
         )
         Spacer(modifier = Modifier.height(16.dp))
+        if (hasRoomTasks) {
+            taskPreviews.forEachIndexed { index, task ->
+                if (index > 0) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+                WeekTaskPreviewCard(
+                    title = task.title,
+                    meta = task.meta,
+                    status = if (task.isCompleted) "Done" else task.energyLabel,
+                    statusColor = task.weekStatusColor()
+                )
+            }
+        } else {
+            StaticWeekTaskCards()
+        }
+    }
+}
+
+@Composable
+private fun StaticWeekTaskCards() {
         WeekTaskPreviewCard(
             title = "Draft project story",
             meta = "Today - link to monthly portfolio focus",
@@ -403,6 +444,15 @@ private fun WeekTaskPreviewSection(modifier: Modifier = Modifier) {
             status = "Low",
             statusColor = OrbitSuccess
         )
+}
+
+private fun WeekTaskPreview.weekStatusColor(): Color {
+    if (isCompleted) return OrbitTextMuted
+
+    return when {
+        energyLabel.contains("low", ignoreCase = true) -> OrbitSuccess
+        energyLabel.contains("high", ignoreCase = true) -> OrbitEnergy
+        else -> OrbitPrimaryAccent
     }
 }
 

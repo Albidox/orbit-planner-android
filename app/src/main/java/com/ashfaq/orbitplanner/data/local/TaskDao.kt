@@ -25,6 +25,13 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE plannedDate = :plannedDate ORDER BY createdAt DESC")
     fun getTasksForDate(plannedDate: Long): Flow<List<TaskEntity>>
 
+    @Query(
+        "SELECT * FROM tasks " +
+            "WHERE plannedDate BETWEEN :startDate AND :endDate " +
+            "ORDER BY plannedDate ASC, createdAt DESC"
+    )
+    fun getTasksBetween(startDate: Long, endDate: Long): Flow<List<TaskEntity>>
+
     @Query("SELECT COUNT(*) FROM tasks")
     suspend fun getTaskCount(): Int
 

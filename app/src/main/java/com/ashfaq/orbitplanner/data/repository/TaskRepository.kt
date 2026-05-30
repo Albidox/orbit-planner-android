@@ -15,6 +15,10 @@ class TaskRepository(
         return taskDao.getTasksForDate(plannedDate)
     }
 
+    fun getTasksBetween(startDate: Long, endDate: Long): Flow<List<TaskEntity>> {
+        return taskDao.getTasksBetween(startDate, endDate)
+    }
+
     suspend fun getTaskCount(): Int {
         return taskDao.getTaskCount()
     }

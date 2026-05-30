@@ -23,9 +23,14 @@ import com.ashfaq.orbitplanner.ui.screens.TaskViewModel
 import com.ashfaq.orbitplanner.ui.screens.TaskViewModelFactory
 import com.ashfaq.orbitplanner.ui.screens.TodayTaskPreview
 import com.ashfaq.orbitplanner.ui.screens.TodayScreen
+import com.ashfaq.orbitplanner.ui.screens.WeekTaskPreview
 import com.ashfaq.orbitplanner.ui.screens.WeekScreen
 import com.ashfaq.orbitplanner.ui.screens.YearOrbitScreen
 import com.ashfaq.orbitplanner.ui.theme.OrbitPlannerTheme
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,15 +47,27 @@ class MainActivity : ComponentActivity() {
         taskViewModel.seedSampleTasksForTestingIfEmpty()
 
         setContent {
+            val currentWeekRange = remember { currentWeekRangeMillis() }
             val savedTasks by taskViewModel.allTasks.collectAsState(initial = emptyList())
+            val savedWeekTasks by remember(currentWeekRange) {
+                taskViewModel.getTasksBetween(
+                    startDate = currentWeekRange.startMillis,
+                    endDate = currentWeekRange.endMillis
+                )
+            }.collectAsState(initial = emptyList())
             val todayTaskPreviews = savedTasks.map { task ->
                 task.toTodayTaskPreview()
+            }
+            val weekTaskPreviews = savedWeekTasks.map { task ->
+                task.toWeekTaskPreview()
             }
 
             OrbitPlannerTheme {
                 OrbitPlannerStaticApp(
                     modifier = Modifier.fillMaxSize(),
                     todayTasks = todayTaskPreviews,
+                    weekTasks = weekTaskPreviews,
+                    weekRangeLabel = currentWeekRange.label,
                     onAddTask = { title, linkedMission, energyLabel ->
                         taskViewModel.addTaskFromInput(
                             title = title,
@@ -74,6 +91,8 @@ class MainActivity : ComponentActivity() {
 private fun OrbitPlannerStaticApp(
     modifier: Modifier = Modifier,
     todayTasks: List<TodayTaskPreview> = emptyList(),
+    weekTasks: List<WeekTaskPreview> = emptyList(),
+    weekRangeLabel: String = "May 25 - May 31, 2026",
     onAddTask: (title: String, linkedMission: String?, energyLabel: String) -> Unit = { _, _, _ -> },
     onToggleTaskComplete: (taskId: Long) -> Unit = {},
     onDeleteTask: (taskId: Long) -> Unit = {}
@@ -88,6 +107,8 @@ private fun OrbitPlannerStaticApp(
     when (selectedTab) {
         TAB_WEEK -> WeekScreen(
             modifier = modifier,
+            weekRangeLabel = weekRangeLabel,
+            taskPreviews = weekTasks,
             onBottomNavSelected = onTabSelected
         )
 
@@ -123,6 +144,12 @@ private const val TAB_MONTH = "Month"
 private const val TAB_YEAR = "Year"
 private const val TAB_SETTINGS = "Settings"
 
+private data class WeekRange(
+    val startMillis: Long,
+    val endMillis: Long,
+    val label: String
+)
+
 private fun TaskEntity.toTodayTaskPreview(): TodayTaskPreview {
     val missionLabel = linkedMission?.takeIf { it.isNotBlank() }
         ?: orbitLevel?.takeIf { it.isNotBlank() }
@@ -134,6 +161,52 @@ private fun TaskEntity.toTodayTaskPreview(): TodayTaskPreview {
         linkedMission = missionLabel,
         energyLabel = energyLabel?.takeIf { it.isNotBlank() } ?: "Normal",
         isCompleted = isCompleted
+    )
+}
+
+private fun TaskEntity.toWeekTaskPreview(): WeekTaskPreview {
+    val taskTime = plannedDate ?: createdAt
+    val dayLabel = SimpleDateFormat("EEE", Locale.getDefault()).format(Date(taskTime))
+    val missionLabel = linkedMission?.takeIf { it.isNotBlank() }
+        ?: orbitLevel?.takeIf { it.isNotBlank() }
+        ?: "Local planner task"
+
+    return WeekTaskPreview(
+        title = title,
+        meta = "$dayLabel - $missionLabel",
+        energyLabel = energyLabel?.takeIf { it.isNotBlank() } ?: "Normal",
+        isCompleted = isCompleted
+    )
+}
+
+private fun currentWeekRangeMillis(): WeekRange {
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.HOUR_OF_DAY, 0)
+    calendar.set(Calendar.MINUTE, 0)
+    calendar.set(Calendar.SECOND, 0)
+    calendar.set(Calendar.MILLISECOND, 0)
+
+    val daysFromMonday = (calendar.get(Calendar.DAY_OF_WEEK) - Calendar.MONDAY + 7) % 7
+    calendar.add(Calendar.DAY_OF_MONTH, -daysFromMonday)
+    val startMillis = calendar.timeInMillis
+    val startDate = calendar.time
+
+    calendar.add(Calendar.DAY_OF_MONTH, 6)
+    calendar.set(Calendar.HOUR_OF_DAY, 23)
+    calendar.set(Calendar.MINUTE, 59)
+    calendar.set(Calendar.SECOND, 59)
+    calendar.set(Calendar.MILLISECOND, 999)
+    val endMillis = calendar.timeInMillis
+    val endDate = calendar.time
+
+    val formatter = SimpleDateFormat("MMM d", Locale.getDefault())
+    val yearFormatter = SimpleDateFormat("yyyy", Locale.getDefault())
+    val label = "${formatter.format(startDate)} - ${formatter.format(endDate)}, ${yearFormatter.format(endDate)}"
+
+    return WeekRange(
+        startMillis = startMillis,
+        endMillis = endMillis,
+        label = label
     )
 }
 
