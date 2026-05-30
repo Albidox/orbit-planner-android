@@ -50,7 +50,14 @@ class MainActivity : ComponentActivity() {
             OrbitPlannerTheme {
                 OrbitPlannerStaticApp(
                     modifier = Modifier.fillMaxSize(),
-                    todayTasks = todayTaskPreviews
+                    todayTasks = todayTaskPreviews,
+                    onAddTask = { title, linkedMission, energyLabel ->
+                        taskViewModel.addTaskFromInput(
+                            title = title,
+                            linkedMission = linkedMission,
+                            energyLabel = energyLabel
+                        )
+                    }
                 )
             }
         }
@@ -60,7 +67,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun OrbitPlannerStaticApp(
     modifier: Modifier = Modifier,
-    todayTasks: List<TodayTaskPreview> = emptyList()
+    todayTasks: List<TodayTaskPreview> = emptyList(),
+    onAddTask: (title: String, linkedMission: String?, energyLabel: String) -> Unit = { _, _, _ -> }
 ) {
     // Temporary Phase 3G tab state. Real Navigation Compose will replace this later.
     var selectedTab by remember { mutableStateOf(TAB_TODAY) }
@@ -93,6 +101,7 @@ private fun OrbitPlannerStaticApp(
         else -> TodayScreen(
             modifier = modifier,
             taskPreviews = todayTasks,
+            onAddTask = onAddTask,
             onBottomNavSelected = onTabSelected
         )
     }

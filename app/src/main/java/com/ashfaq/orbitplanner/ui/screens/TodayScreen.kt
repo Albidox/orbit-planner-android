@@ -3,6 +3,7 @@ package com.ashfaq.orbitplanner.ui.screens
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -21,10 +22,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,8 +72,14 @@ data class TodayTaskPreview(
 fun TodayScreen(
     modifier: Modifier = Modifier,
     taskPreviews: List<TodayTaskPreview> = emptyList(),
+    onAddTask: (title: String, linkedMission: String?, energyLabel: String) -> Unit = { _, _, _ -> },
     onBottomNavSelected: (String) -> Unit = {}
 ) {
+    var isAddTaskDialogOpen by remember { mutableStateOf(false) }
+    var taskTitle by remember { mutableStateOf("") }
+    var linkedMission by remember { mutableStateOf("") }
+    var showTitleError by remember { mutableStateOf(false) }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -85,15 +100,56 @@ fun TodayScreen(
             Spacer(modifier = Modifier.height(20.dp))
             MissionSummaryCard()
             Spacer(modifier = Modifier.height(24.dp))
-            TaskListSection(taskPreviews = taskPreviews)
+            TaskListSection(
+                taskPreviews = taskPreviews,
+                onAddTaskClick = {
+                    showTitleError = false
+                    isAddTaskDialogOpen = true
+                }
+            )
             Spacer(modifier = Modifier.height(20.dp))
             RescueEntryCard()
             Spacer(modifier = Modifier.height(14.dp))
-            AddTaskAction()
+            AddTaskAction(
+                onClick = {
+                    showTitleError = false
+                    isAddTaskDialogOpen = true
+                }
+            )
             Spacer(modifier = Modifier.height(18.dp))
             OrbitBottomNavigation(
                 selectedLabel = "Today",
                 onItemSelected = onBottomNavSelected
+            )
+        }
+
+        if (isAddTaskDialogOpen) {
+            AddTaskDialog(
+                title = taskTitle,
+                linkedMission = linkedMission,
+                showTitleError = showTitleError,
+                onTitleChange = {
+                    taskTitle = it
+                    if (it.isNotBlank()) {
+                        showTitleError = false
+                    }
+                },
+                onLinkedMissionChange = { linkedMission = it },
+                onDismiss = {
+                    isAddTaskDialogOpen = false
+                    showTitleError = false
+                },
+                onSave = {
+                    if (taskTitle.isBlank()) {
+                        showTitleError = true
+                    } else {
+                        onAddTask(taskTitle, linkedMission, "Normal")
+                        taskTitle = ""
+                        linkedMission = ""
+                        showTitleError = false
+                        isAddTaskDialogOpen = false
+                    }
+                }
             )
         }
     }
@@ -318,7 +374,8 @@ fun OrbitProgressCard(modifier: Modifier = Modifier) {
 @Composable
 private fun TaskListSection(
     modifier: Modifier = Modifier,
-    taskPreviews: List<TodayTaskPreview> = emptyList()
+    taskPreviews: List<TodayTaskPreview> = emptyList(),
+    onAddTaskClick: () -> Unit = {}
 ) {
     val hasSavedTasks = taskPreviews.isNotEmpty()
 
@@ -354,7 +411,8 @@ private fun TaskListSection(
             StatusChip(
                 text = "+ Add task",
                 color = OrbitPrimaryAccent,
-                filled = false
+                filled = false,
+                modifier = Modifier.clickable(onClick = onAddTaskClick)
             )
         }
         Spacer(modifier = Modifier.height(18.dp))
@@ -562,8 +620,21 @@ private fun RescuePulse() {
 
 @Composable
 fun AddTaskAction(modifier: Modifier = Modifier) {
+    AddTaskAction(
+        onClick = {},
+        modifier = modifier
+    )
+}
+
+@Composable
+fun AddTaskAction(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -585,6 +656,69 @@ fun AddTaskAction(modifier: Modifier = Modifier) {
             cornerRadius = 26.dp
         )
     }
+}
+
+@Composable
+private fun AddTaskDialog(
+    title: String,
+    linkedMission: String,
+    showTitleError: Boolean,
+    onTitleChange: (String) -> Unit,
+    onLinkedMissionChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onSave: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = OrbitSurfaceCard,
+        titleContentColor = OrbitTextPrimary,
+        textContentColor = OrbitTextSecondary,
+        title = {
+            Text(text = "Add task")
+        },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = onTitleChange,
+                    label = { Text(text = "Task title") },
+                    isError = showTitleError,
+                    singleLine = true
+                )
+                if (showTitleError) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Task title is required.",
+                        color = OrbitEnergy,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = linkedMission,
+                    onValueChange = onLinkedMissionChange,
+                    label = { Text(text = "Linked mission optional") },
+                    singleLine = true
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Energy: Normal",
+                    color = OrbitTextMuted,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = onSave) {
+                Text(text = "Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Cancel")
+            }
+        }
+    )
 }
 
 @Composable

@@ -18,6 +18,29 @@ class TaskViewModel(
         return taskRepository.getTasksForDate(plannedDate)
     }
 
+    fun addTaskFromInput(
+        title: String,
+        linkedMission: String?,
+        energyLabel: String = "Normal"
+    ) {
+        val cleanTitle = title.trim()
+        if (cleanTitle.isBlank()) return
+
+        val now = System.currentTimeMillis()
+        val task = TaskEntity(
+            title = cleanTitle,
+            linkedMission = linkedMission?.trim()?.takeIf { it.isNotBlank() },
+            energyLabel = energyLabel.trim().ifBlank { "Normal" },
+            createdAt = now,
+            plannedDate = now,
+            orbitLevel = "Daily"
+        )
+
+        viewModelScope.launch {
+            taskRepository.insertTask(task)
+        }
+    }
+
     fun seedSampleTasksForTestingIfEmpty() {
         if (hasStartedSampleSeed) return
         hasStartedSampleSeed = true
