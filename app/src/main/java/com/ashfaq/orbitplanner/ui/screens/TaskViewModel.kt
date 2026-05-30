@@ -20,6 +20,10 @@ class TaskViewModel(
         return taskRepository.getTasksBetween(startDate, endDate)
     }
 
+    fun getRescueCandidateTasks(beforeDate: Long): Flow<List<TaskEntity>> {
+        return taskRepository.getRescueCandidateTasks(beforeDate)
+    }
+
     fun addTaskFromInput(
         title: String,
         linkedMission: String?,

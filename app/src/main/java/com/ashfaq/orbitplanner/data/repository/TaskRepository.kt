@@ -19,6 +19,10 @@ class TaskRepository(
         return taskDao.getTasksBetween(startDate, endDate)
     }
 
+    fun getRescueCandidateTasks(beforeDate: Long): Flow<List<TaskEntity>> {
+        return taskDao.getRescueCandidateTasks(beforeDate)
+    }
+
     suspend fun getTaskById(taskId: Long): TaskEntity? {
         return taskDao.getTaskById(taskId)
     }

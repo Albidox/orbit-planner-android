@@ -32,6 +32,15 @@ interface TaskDao {
     )
     fun getTasksBetween(startDate: Long, endDate: Long): Flow<List<TaskEntity>>
 
+    @Query(
+        "SELECT * FROM tasks " +
+            "WHERE isCompleted = 0 " +
+            "AND plannedDate IS NOT NULL " +
+            "AND plannedDate < :beforeDate " +
+            "ORDER BY plannedDate ASC, createdAt DESC"
+    )
+    fun getRescueCandidateTasks(beforeDate: Long): Flow<List<TaskEntity>>
+
     @Query("SELECT * FROM tasks WHERE id = :taskId LIMIT 1")
     suspend fun getTaskById(taskId: Long): TaskEntity?
 
