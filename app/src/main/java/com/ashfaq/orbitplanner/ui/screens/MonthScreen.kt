@@ -53,7 +53,10 @@ import com.ashfaq.orbitplanner.ui.theme.OrbitTextPrimary
 import com.ashfaq.orbitplanner.ui.theme.OrbitTextSecondary
 
 @Composable
-fun MonthScreen(modifier: Modifier = Modifier) {
+fun MonthScreen(
+    modifier: Modifier = Modifier,
+    onBottomNavSelected: (String) -> Unit = {}
+) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -80,7 +83,10 @@ fun MonthScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(14.dp))
             MonthProgressEnergyCard()
             Spacer(modifier = Modifier.height(18.dp))
-            OrbitBottomNavigation(selectedLabel = "Month")
+            OrbitBottomNavigation(
+                selectedLabel = "Month",
+                onItemSelected = onBottomNavSelected
+            )
         }
     }
 }

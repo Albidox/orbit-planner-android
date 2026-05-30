@@ -3,6 +3,7 @@ package com.ashfaq.orbitplanner.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,18 +32,21 @@ import com.ashfaq.orbitplanner.ui.theme.OrbitTextMuted
 @Composable
 fun OrbitBottomBar(
     selectedLabel: String = "Today",
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onItemSelected: (String) -> Unit = {}
 ) {
     OrbitBottomNavigation(
         selectedLabel = selectedLabel,
-        modifier = modifier
+        modifier = modifier,
+        onItemSelected = onItemSelected
     )
 }
 
 @Composable
 fun OrbitBottomNavigation(
     selectedLabel: String = "Today",
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onItemSelected: (String) -> Unit = {}
 ) {
     val labels = listOf("Today", "Week", "Month", "Year", "Settings")
 
@@ -65,7 +69,9 @@ fun OrbitBottomNavigation(
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onItemSelected(label) }
                 ) {
                     NavIconDot(
                         label = label,

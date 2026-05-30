@@ -53,7 +53,10 @@ import com.ashfaq.orbitplanner.ui.theme.OrbitTextPrimary
 import com.ashfaq.orbitplanner.ui.theme.OrbitTextSecondary
 
 @Composable
-fun WeekScreen(modifier: Modifier = Modifier) {
+fun WeekScreen(
+    modifier: Modifier = Modifier,
+    onBottomNavSelected: (String) -> Unit = {}
+) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -80,7 +83,10 @@ fun WeekScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(14.dp))
             WeekProgressEnergyCard()
             Spacer(modifier = Modifier.height(18.dp))
-            OrbitBottomNavigation(selectedLabel = "Week")
+            OrbitBottomNavigation(
+                selectedLabel = "Week",
+                onItemSelected = onBottomNavSelected
+            )
         }
     }
 }

@@ -61,7 +61,10 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 @Composable
-fun YearOrbitScreen(modifier: Modifier = Modifier) {
+fun YearOrbitScreen(
+    modifier: Modifier = Modifier,
+    onBottomNavSelected: (String) -> Unit = {}
+) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -86,7 +89,10 @@ fun YearOrbitScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(14.dp))
             YearProgressInsightCard()
             Spacer(modifier = Modifier.height(18.dp))
-            OrbitBottomNavigation(selectedLabel = "Year")
+            OrbitBottomNavigation(
+                selectedLabel = "Year",
+                onItemSelected = onBottomNavSelected
+            )
         }
     }
 }
