@@ -19,6 +19,8 @@ import com.ashfaq.orbitplanner.data.local.TaskEntity
 import com.ashfaq.orbitplanner.data.repository.TaskRepository
 import com.ashfaq.orbitplanner.ui.screens.MonthTaskPreview
 import com.ashfaq.orbitplanner.ui.screens.MonthScreen
+import com.ashfaq.orbitplanner.ui.screens.RescueModePlaceholderScreen
+import com.ashfaq.orbitplanner.ui.screens.RescueTaskPreview
 import com.ashfaq.orbitplanner.ui.screens.SettingsPlaceholderScreen
 import com.ashfaq.orbitplanner.ui.screens.TaskViewModel
 import com.ashfaq.orbitplanner.ui.screens.TaskViewModelFactory
@@ -50,6 +52,7 @@ class MainActivity : ComponentActivity() {
             val currentWeekRange = remember { currentWeekRangeMillis() }
             val currentMonthRange = remember { currentMonthRangeMillis() }
             val currentYearRange = remember { currentYearRangeMillis() }
+            val todayStartMillis = remember { currentDayStartMillis() }
             val savedTasks by taskViewModel.allTasks.collectAsState(initial = emptyList())
             val savedWeekTasks by remember(currentWeekRange) {
                 taskViewModel.getTasksBetween(
@@ -69,6 +72,9 @@ class MainActivity : ComponentActivity() {
                     endDate = currentYearRange.endMillis
                 )
             }.collectAsState(initial = emptyList())
+            val savedRescueTasks by remember(todayStartMillis) {
+                taskViewModel.getRescueCandidateTasks(beforeDate = todayStartMillis)
+            }.collectAsState(initial = emptyList())
             val todayTaskPreviews = savedTasks.map { task ->
                 task.toTodayTaskPreview()
             }
@@ -81,6 +87,9 @@ class MainActivity : ComponentActivity() {
             val yearOrbitSummary = savedYearTasks.toYearOrbitSummary(
                 yearLabel = currentYearRange.label
             )
+            val rescueTaskPreviews = savedRescueTasks.map { task ->
+                task.toRescueTaskPreview()
+            }
 
             OrbitPlannerTheme {
                 OrbitPlannerStaticApp(
@@ -91,6 +100,7 @@ class MainActivity : ComponentActivity() {
                     monthTasks = monthTaskPreviews,
                     monthLabel = currentMonthRange.label,
                     yearOrbitSummary = yearOrbitSummary,
+                    rescueTasks = rescueTaskPreviews,
                     onAddTask = { title, linkedMission, energyLabel ->
                         taskViewModel.addTaskFromInput(
                             title = title,
@@ -119,6 +129,7 @@ private fun OrbitPlannerStaticApp(
     monthTasks: List<MonthTaskPreview> = emptyList(),
     monthLabel: String = "May 2026",
     yearOrbitSummary: YearOrbitSummary? = null,
+    rescueTasks: List<RescueTaskPreview> = emptyList(),
     onAddTask: (title: String, linkedMission: String?, energyLabel: String) -> Unit = { _, _, _ -> },
     onToggleTaskComplete: (taskId: Long) -> Unit = {},
     onDeleteTask: (taskId: Long) -> Unit = {}
@@ -156,6 +167,11 @@ private fun OrbitPlannerStaticApp(
             onBottomNavSelected = onTabSelected
         )
 
+        TAB_RESCUE -> RescueModePlaceholderScreen(
+            modifier = modifier,
+            rescueTasks = rescueTasks
+        )
+
         else -> TodayScreen(
             modifier = modifier,
             taskPreviews = todayTasks,
@@ -172,6 +188,7 @@ private const val TAB_WEEK = "Week"
 private const val TAB_MONTH = "Month"
 private const val TAB_YEAR = "Year"
 private const val TAB_SETTINGS = "Settings"
+private const val TAB_RESCUE = "Rescue"
 
 private data class WeekRange(
     val startMillis: Long,
@@ -235,6 +252,22 @@ private fun TaskEntity.toMonthTaskPreview(): MonthTaskPreview {
     )
 }
 
+private fun TaskEntity.toRescueTaskPreview(): RescueTaskPreview {
+    val plannedTime = plannedDate ?: createdAt
+    val plannedDateLabel = "Planned ${SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(plannedTime))}"
+    val missionLabel = linkedMission?.takeIf { it.isNotBlank() }
+        ?: orbitLevel?.takeIf { it.isNotBlank() }
+        ?: "Local planner task"
+
+    return RescueTaskPreview(
+        id = id,
+        title = title,
+        linkedMission = missionLabel,
+        energyLabel = energyLabel?.takeIf { it.isNotBlank() } ?: "Normal",
+        plannedDateLabel = plannedDateLabel
+    )
+}
+
 private fun List<TaskEntity>.toYearOrbitSummary(yearLabel: String): YearOrbitSummary? {
     if (isEmpty()) return null
 
@@ -279,6 +312,16 @@ private fun List<TaskEntity>.toYearOrbitSummary(yearLabel: String): YearOrbitSum
         activeMonthLabel = monthLabels[activeMonthIndex],
         activeMonthTaskCount = monthlyTaskCounts[activeMonthIndex]
     )
+}
+
+private fun currentDayStartMillis(): Long {
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.HOUR_OF_DAY, 0)
+    calendar.set(Calendar.MINUTE, 0)
+    calendar.set(Calendar.SECOND, 0)
+    calendar.set(Calendar.MILLISECOND, 0)
+
+    return calendar.timeInMillis
 }
 
 private fun currentWeekRangeMillis(): WeekRange {

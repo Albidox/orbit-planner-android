@@ -51,13 +51,30 @@ import com.ashfaq.orbitplanner.ui.theme.OrbitSurfaceRaised
 import com.ashfaq.orbitplanner.ui.theme.OrbitTextPrimary
 import com.ashfaq.orbitplanner.ui.theme.OrbitTextSecondary
 
+data class RescueTaskPreview(
+    val id: Long,
+    val title: String,
+    val linkedMission: String,
+    val energyLabel: String,
+    val plannedDateLabel: String
+)
+
 @Composable
-fun RescueModePlaceholderScreen(modifier: Modifier = Modifier) {
-    RescueModeScreen(modifier = modifier)
+fun RescueModePlaceholderScreen(
+    modifier: Modifier = Modifier,
+    rescueTasks: List<RescueTaskPreview> = emptyList()
+) {
+    RescueModeScreen(
+        modifier = modifier,
+        rescueTasks = rescueTasks
+    )
 }
 
 @Composable
-fun RescueModeScreen(modifier: Modifier = Modifier) {
+fun RescueModeScreen(
+    modifier: Modifier = Modifier,
+    rescueTasks: List<RescueTaskPreview> = emptyList()
+) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -76,19 +93,11 @@ fun RescueModeScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(18.dp))
             RescueToneCard()
             Spacer(modifier = Modifier.height(22.dp))
-            RescueTaskCard(
-                marker = "1",
-                title = "Finish onboarding notes",
-                meta = "Planned yesterday - Mission: Planner setup"
-            )
-            Spacer(modifier = Modifier.height(18.dp))
-            RescueTaskCard(
-                marker = "2",
-                title = "Clean up task backlog",
-                meta = "Planned Monday - Goal: calmer weekly rhythm"
-            )
-            Spacer(modifier = Modifier.height(22.dp))
-            RescueEmptyStatePreview()
+            if (rescueTasks.isEmpty()) {
+                RescueEmptyStatePreview()
+            } else {
+                RescueTaskList(rescueTasks = rescueTasks)
+            }
             Spacer(modifier = Modifier.height(18.dp))
             OrbitBottomNavigation(selectedLabel = "Today")
         }
@@ -204,6 +213,25 @@ private fun RescueToneCard(modifier: Modifier = Modifier) {
                     )
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun RescueTaskList(
+    rescueTasks: List<RescueTaskPreview>,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        rescueTasks.forEachIndexed { index, task ->
+            if (index > 0) {
+                Spacer(modifier = Modifier.height(18.dp))
+            }
+            RescueTaskCard(
+                marker = (index + 1).toString(),
+                title = task.title,
+                meta = "${task.plannedDateLabel} - ${task.linkedMission} - Energy: ${task.energyLabel}"
+            )
         }
     }
 }
