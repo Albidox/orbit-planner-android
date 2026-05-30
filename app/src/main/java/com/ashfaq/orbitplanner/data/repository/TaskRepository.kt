@@ -19,6 +19,10 @@ class TaskRepository(
         return taskDao.getTaskCount()
     }
 
+    suspend fun getTaskById(taskId: Long): TaskEntity? {
+        return taskDao.getTaskById(taskId)
+    }
+
     suspend fun insertTask(task: TaskEntity): Long {
         return taskDao.insertTask(task)
     }
@@ -29,5 +33,9 @@ class TaskRepository(
 
     suspend fun deleteTask(task: TaskEntity) {
         taskDao.deleteTask(task)
+    }
+
+    suspend fun deleteTaskById(taskId: Long) {
+        taskDao.deleteTaskById(taskId)
     }
 }

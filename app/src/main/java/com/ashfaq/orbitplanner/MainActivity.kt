@@ -57,6 +57,12 @@ class MainActivity : ComponentActivity() {
                             linkedMission = linkedMission,
                             energyLabel = energyLabel
                         )
+                    },
+                    onToggleTaskComplete = { taskId ->
+                        taskViewModel.toggleTaskCompleted(taskId)
+                    },
+                    onDeleteTask = { taskId ->
+                        taskViewModel.deleteTaskById(taskId)
                     }
                 )
             }
@@ -68,7 +74,9 @@ class MainActivity : ComponentActivity() {
 private fun OrbitPlannerStaticApp(
     modifier: Modifier = Modifier,
     todayTasks: List<TodayTaskPreview> = emptyList(),
-    onAddTask: (title: String, linkedMission: String?, energyLabel: String) -> Unit = { _, _, _ -> }
+    onAddTask: (title: String, linkedMission: String?, energyLabel: String) -> Unit = { _, _, _ -> },
+    onToggleTaskComplete: (taskId: Long) -> Unit = {},
+    onDeleteTask: (taskId: Long) -> Unit = {}
 ) {
     // Temporary Phase 3G tab state. Real Navigation Compose will replace this later.
     var selectedTab by remember { mutableStateOf(TAB_TODAY) }
@@ -102,6 +110,8 @@ private fun OrbitPlannerStaticApp(
             modifier = modifier,
             taskPreviews = todayTasks,
             onAddTask = onAddTask,
+            onToggleTaskComplete = onToggleTaskComplete,
+            onDeleteTask = onDeleteTask,
             onBottomNavSelected = onTabSelected
         )
     }
@@ -119,9 +129,11 @@ private fun TaskEntity.toTodayTaskPreview(): TodayTaskPreview {
         ?: "Local planner task"
 
     return TodayTaskPreview(
+        id = id,
         title = title,
         linkedMission = missionLabel,
-        energyLabel = energyLabel?.takeIf { it.isNotBlank() } ?: "Normal"
+        energyLabel = energyLabel?.takeIf { it.isNotBlank() } ?: "Normal",
+        isCompleted = isCompleted
     )
 }
 

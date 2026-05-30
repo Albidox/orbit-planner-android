@@ -76,6 +76,21 @@ class TaskViewModel(
         }
     }
 
+    fun toggleTaskCompleted(taskId: Long) {
+        viewModelScope.launch {
+            val task = taskRepository.getTaskById(taskId) ?: return@launch
+            taskRepository.updateTask(
+                task.copy(isCompleted = !task.isCompleted)
+            )
+        }
+    }
+
+    fun deleteTaskById(taskId: Long) {
+        viewModelScope.launch {
+            taskRepository.deleteTaskById(taskId)
+        }
+    }
+
     suspend fun addTask(
         title: String,
         linkedMission: String? = null,

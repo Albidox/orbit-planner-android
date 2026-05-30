@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -44,6 +45,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -63,9 +65,11 @@ import com.ashfaq.orbitplanner.ui.theme.OrbitTextPrimary
 import com.ashfaq.orbitplanner.ui.theme.OrbitTextSecondary
 
 data class TodayTaskPreview(
+    val id: Long,
     val title: String,
     val linkedMission: String,
-    val energyLabel: String
+    val energyLabel: String,
+    val isCompleted: Boolean
 )
 
 @Composable
@@ -73,6 +77,8 @@ fun TodayScreen(
     modifier: Modifier = Modifier,
     taskPreviews: List<TodayTaskPreview> = emptyList(),
     onAddTask: (title: String, linkedMission: String?, energyLabel: String) -> Unit = { _, _, _ -> },
+    onToggleTaskComplete: (taskId: Long) -> Unit = {},
+    onDeleteTask: (taskId: Long) -> Unit = {},
     onBottomNavSelected: (String) -> Unit = {}
 ) {
     var isAddTaskDialogOpen by remember { mutableStateOf(false) }
@@ -102,6 +108,8 @@ fun TodayScreen(
             Spacer(modifier = Modifier.height(24.dp))
             TaskListSection(
                 taskPreviews = taskPreviews,
+                onToggleTaskComplete = onToggleTaskComplete,
+                onDeleteTask = onDeleteTask,
                 onAddTaskClick = {
                     showTitleError = false
                     isAddTaskDialogOpen = true
@@ -375,6 +383,8 @@ fun OrbitProgressCard(modifier: Modifier = Modifier) {
 private fun TaskListSection(
     modifier: Modifier = Modifier,
     taskPreviews: List<TodayTaskPreview> = emptyList(),
+    onToggleTaskComplete: (taskId: Long) -> Unit = {},
+    onDeleteTask: (taskId: Long) -> Unit = {},
     onAddTaskClick: () -> Unit = {}
 ) {
     val hasSavedTasks = taskPreviews.isNotEmpty()
@@ -425,7 +435,14 @@ private fun TaskListSection(
                     title = task.title,
                     link = task.linkedMission,
                     status = task.energyLabel,
-                    statusColor = task.taskStatusColor()
+                    statusColor = task.taskStatusColor(),
+                    isCompleted = task.isCompleted,
+                    onToggleComplete = {
+                        onToggleTaskComplete(task.id)
+                    },
+                    onDelete = {
+                        onDeleteTask(task.id)
+                    }
                 )
             }
         } else {
@@ -467,8 +484,14 @@ fun TaskPreviewCard(
     link: String,
     status: String,
     statusColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isCompleted: Boolean = false,
+    onToggleComplete: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null
 ) {
+    val displayedStatus = if (isCompleted) "Done" else status
+    val displayedStatusColor = if (isCompleted) OrbitTextMuted else statusColor
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -480,23 +503,35 @@ fun TaskPreviewCard(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TaskStatusDot(color = statusColor)
+            if (onToggleComplete == null) {
+                TaskStatusDot(color = statusColor)
+            } else {
+                Checkbox(
+                    checked = isCompleted,
+                    onCheckedChange = { onToggleComplete() }
+                )
+            }
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    color = OrbitTextPrimary,
+                    color = if (isCompleted) OrbitTextMuted else OrbitTextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontSize = 13.sp,
-                        lineHeight = 17.sp
+                        lineHeight = 17.sp,
+                        textDecoration = if (isCompleted) {
+                            TextDecoration.LineThrough
+                        } else {
+                            TextDecoration.None
+                        }
                     )
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = link,
-                    color = OrbitTextSecondary,
+                    color = if (isCompleted) OrbitTextMuted else OrbitTextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -506,10 +541,25 @@ fun TaskPreviewCard(
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
-            StatusChip(
-                text = status,
-                color = statusColor
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                StatusChip(
+                    text = displayedStatus,
+                    color = displayedStatusColor
+                )
+                if (onDelete != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    TextButton(onClick = onDelete) {
+                        Text(
+                            text = "Delete",
+                            color = OrbitEnergy,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontSize = 9.sp,
+                                lineHeight = 12.sp
+                            )
+                        )
+                    }
+                }
+            }
         }
     }
 }
