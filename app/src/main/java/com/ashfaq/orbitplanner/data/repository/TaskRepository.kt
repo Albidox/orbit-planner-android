@@ -1,0 +1,29 @@
+package com.ashfaq.orbitplanner.data.repository
+
+import com.ashfaq.orbitplanner.data.local.TaskDao
+import com.ashfaq.orbitplanner.data.local.TaskEntity
+import kotlinx.coroutines.flow.Flow
+
+class TaskRepository(
+    private val taskDao: TaskDao
+) {
+    fun getAllTasks(): Flow<List<TaskEntity>> {
+        return taskDao.getAllTasks()
+    }
+
+    fun getTasksForDate(plannedDate: Long): Flow<List<TaskEntity>> {
+        return taskDao.getTasksForDate(plannedDate)
+    }
+
+    suspend fun insertTask(task: TaskEntity): Long {
+        return taskDao.insertTask(task)
+    }
+
+    suspend fun updateTask(task: TaskEntity) {
+        taskDao.updateTask(task)
+    }
+
+    suspend fun deleteTask(task: TaskEntity) {
+        taskDao.deleteTask(task)
+    }
+}
