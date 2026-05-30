@@ -15,6 +15,10 @@ class TaskRepository(
         return taskDao.getTasksForDate(plannedDate)
     }
 
+    suspend fun getTaskCount(): Int {
+        return taskDao.getTaskCount()
+    }
+
     suspend fun insertTask(task: TaskEntity): Long {
         return taskDao.insertTask(task)
     }

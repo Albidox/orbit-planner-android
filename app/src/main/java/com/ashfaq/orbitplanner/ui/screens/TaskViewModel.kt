@@ -1,17 +1,56 @@
 package com.ashfaq.orbitplanner.ui.screens
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.ashfaq.orbitplanner.data.local.TaskEntity
 import com.ashfaq.orbitplanner.data.repository.TaskRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
 class TaskViewModel(
     private val taskRepository: TaskRepository
 ) : ViewModel() {
     val allTasks: Flow<List<TaskEntity>> = taskRepository.getAllTasks()
 
+    private var hasStartedSampleSeed = false
+
     fun getTasksForDate(plannedDate: Long): Flow<List<TaskEntity>> {
         return taskRepository.getTasksForDate(plannedDate)
+    }
+
+    fun seedSampleTasksForTestingIfEmpty() {
+        if (hasStartedSampleSeed) return
+        hasStartedSampleSeed = true
+
+        viewModelScope.launch {
+            if (taskRepository.getTaskCount() > 0) return@launch
+
+            val now = System.currentTimeMillis()
+            val sampleTasks = listOf(
+                TaskEntity(
+                    title = "Draft project summary",
+                    linkedMission = "Mission: Portfolio foundations",
+                    energyLabel = "Normal",
+                    createdAt = now
+                ),
+                TaskEntity(
+                    title = "Review Kotlin notes",
+                    linkedMission = "Goal: Android career growth",
+                    energyLabel = "Low",
+                    createdAt = now - 1_000
+                ),
+                TaskEntity(
+                    title = "Plan tomorrow's mission",
+                    linkedMission = "Weekly: Finish portfolio",
+                    energyLabel = "Normal",
+                    createdAt = now - 2_000
+                )
+            )
+
+            sampleTasks.forEach { task ->
+                taskRepository.insertTask(task)
+            }
+        }
     }
 
     suspend fun addTask(
