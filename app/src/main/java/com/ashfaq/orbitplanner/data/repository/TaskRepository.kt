@@ -27,6 +27,10 @@ class TaskRepository(
         return taskDao.getTaskById(taskId)
     }
 
+    suspend fun getPendingTaskCountForReminder(todayStart: Long): Int {
+        return taskDao.getPendingTaskCountForReminder(todayStart)
+    }
+
     suspend fun insertTask(task: TaskEntity): Long {
         return taskDao.insertTask(task)
     }

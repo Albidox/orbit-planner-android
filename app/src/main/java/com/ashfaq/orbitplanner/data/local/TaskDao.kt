@@ -41,6 +41,14 @@ interface TaskDao {
     )
     fun getRescueCandidateTasks(beforeDate: Long): Flow<List<TaskEntity>>
 
+    @Query(
+        "SELECT COUNT(*) FROM tasks " +
+            "WHERE isCompleted = 0 " +
+            "AND plannedDate IS NOT NULL " +
+            "AND plannedDate <= :todayStart"
+    )
+    suspend fun getPendingTaskCountForReminder(todayStart: Long): Int
+
     @Query("SELECT * FROM tasks WHERE id = :taskId LIMIT 1")
     suspend fun getTaskById(taskId: Long): TaskEntity?
 
