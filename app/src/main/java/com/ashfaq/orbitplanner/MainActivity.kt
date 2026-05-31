@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.ashfaq.orbitplanner.data.local.DatabaseProvider
 import com.ashfaq.orbitplanner.data.local.TaskEntity
 import com.ashfaq.orbitplanner.data.repository.TaskRepository
+import com.ashfaq.orbitplanner.notifications.NotificationHelper
 import com.ashfaq.orbitplanner.ui.screens.MonthTaskPreview
 import com.ashfaq.orbitplanner.ui.screens.MonthScreen
 import com.ashfaq.orbitplanner.ui.screens.RescueModePlaceholderScreen
@@ -40,6 +41,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Phase 8B only creates the channel foundation. Reminders are not scheduled or sent yet.
+        NotificationHelper.createPendingTaskReminderChannel(this)
 
         val database = DatabaseProvider.getDatabase(applicationContext)
         val taskRepository = TaskRepository(database.taskDao())
