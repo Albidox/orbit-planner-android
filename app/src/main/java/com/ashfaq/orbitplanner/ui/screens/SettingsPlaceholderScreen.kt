@@ -53,6 +53,9 @@ import com.ashfaq.orbitplanner.ui.theme.OrbitTextSecondary
 @Composable
 fun SettingsPlaceholderScreen(
     modifier: Modifier = Modifier,
+    notificationStatusTitle: String = "Permission needed",
+    notificationStatusBody: String = "Orbit Planner can send one gentle daily reminder when pending tasks exist.",
+    notificationStatusNeedsAttention: Boolean = true,
     onBottomNavSelected: (String) -> Unit = {}
 ) {
     Box(
@@ -71,30 +74,34 @@ fun SettingsPlaceholderScreen(
         ) {
             SettingsHeader()
             Spacer(modifier = Modifier.height(18.dp))
-            SettingsIntroCard()
+            SettingsIntroCard(
+                notificationStatusTitle = notificationStatusTitle,
+                notificationStatusBody = notificationStatusBody,
+                notificationStatusNeedsAttention = notificationStatusNeedsAttention
+            )
             Spacer(modifier = Modifier.height(18.dp))
             SettingsPreviewCard(
-                marker = "01",
-                title = "Reminder preferences",
-                body = "Morning planning, evening rescue, and weekly review will live here later.",
+                marker = "02",
+                title = "Daily reminder",
+                body = "One gentle daily reminder can appear when pending tasks exist.",
                 accentColor = OrbitPrimaryAccent
             )
             Spacer(modifier = Modifier.height(12.dp))
             SettingsPreviewCard(
-                marker = "02",
-                title = "Calm orbit theme",
-                body = "Dark premium colors stay consistent across Today, Week, Month, and Year.",
+                marker = "03",
+                title = "Local-first planner",
+                body = "Tasks stay on this device. No login or cloud sync is active.",
                 accentColor = OrbitSecondaryAccent
             )
             Spacer(modifier = Modifier.height(12.dp))
             SettingsPreviewCard(
-                marker = "03",
-                title = "Local planner setup",
-                body = "Future offline storage settings will remain simple and beginner-friendly.",
+                marker = "04",
+                title = "App info",
+                body = "Orbit Planner version 1.0. Built for calm daily planning.",
                 accentColor = OrbitSuccess
             )
             Spacer(modifier = Modifier.height(14.dp))
-            SettingsStaticNote()
+            SettingsStatusOnlyNote()
             Spacer(modifier = Modifier.height(18.dp))
             OrbitBottomNavigation(
                 selectedLabel = "Settings",
@@ -154,7 +161,7 @@ private fun SettingsHeader(modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "Static development placeholder",
+            text = "Notification status and app info",
             color = OrbitTextSecondary,
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontSize = 11.sp,
@@ -165,7 +172,14 @@ private fun SettingsHeader(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun SettingsIntroCard(modifier: Modifier = Modifier) {
+private fun SettingsIntroCard(
+    notificationStatusTitle: String,
+    notificationStatusBody: String,
+    notificationStatusNeedsAttention: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val statusColor = if (notificationStatusNeedsAttention) OrbitEnergy else OrbitSuccess
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -177,12 +191,12 @@ private fun SettingsIntroCard(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SettingsOrbitDot()
+            SettingsOrbitDot(accentColor = statusColor)
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "TEMPORARY SETTINGS",
-                    color = OrbitEnergy,
+                    text = "NOTIFICATION STATUS",
+                    color = statusColor,
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontSize = 9.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -191,7 +205,7 @@ private fun SettingsIntroCard(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Quiet controls will arrive later.",
+                    text = notificationStatusTitle,
                     color = OrbitTextPrimary,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontSize = 15.sp,
@@ -201,7 +215,7 @@ private fun SettingsIntroCard(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "For now, this tab only proves the static bottom navigation flow.",
+                    text = notificationStatusBody,
                     color = OrbitTextSecondary,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 10.sp,
@@ -214,22 +228,25 @@ private fun SettingsIntroCard(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun SettingsOrbitDot(modifier: Modifier = Modifier) {
+private fun SettingsOrbitDot(
+    accentColor: Color,
+    modifier: Modifier = Modifier
+) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(42.dp)
-            .background(OrbitEnergy.copy(alpha = 0.18f), CircleShape)
+            .background(accentColor.copy(alpha = 0.18f), CircleShape)
     ) {
         Box(
             modifier = Modifier
                 .size(18.dp)
-                .background(OrbitEnergy.copy(alpha = 0.24f), CircleShape)
+                .background(accentColor.copy(alpha = 0.24f), CircleShape)
         )
         Box(
             modifier = Modifier
                 .size(7.dp)
-                .background(OrbitEnergy, CircleShape)
+                .background(accentColor, CircleShape)
         )
     }
 }
@@ -306,7 +323,7 @@ private fun SettingsPreviewCard(
 }
 
 @Composable
-private fun SettingsStaticNote(modifier: Modifier = Modifier) {
+private fun SettingsStatusOnlyNote(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -320,7 +337,7 @@ private fun SettingsStaticNote(modifier: Modifier = Modifier) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Static only",
+                    text = "Status only",
                     color = OrbitPrimaryAccent,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -332,7 +349,7 @@ private fun SettingsStaticNote(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(5.dp))
                 Text(
-                    text = "No settings are saved or applied in this phase.",
+                    text = "No toggles, permission requests, or schedule changes in this phase.",
                     color = OrbitTextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -355,7 +372,7 @@ private fun SettingsStaticNote(modifier: Modifier = Modifier) {
                         .padding(horizontal = 10.dp)
                 ) {
                     Text(
-                        text = "Preview",
+                        text = "Read-only",
                         color = OrbitTextMuted,
                         maxLines = 1,
                         style = MaterialTheme.typography.labelMedium.copy(

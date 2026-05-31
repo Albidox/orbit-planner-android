@@ -1,5 +1,7 @@
 package com.ashfaq.orbitplanner
 
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -60,6 +62,7 @@ class MainActivity : ComponentActivity() {
             val todayStartMillis = remember { currentDayStartMillis() }
             val tomorrowStartMillis = remember { currentTomorrowStartMillis() }
             val weekendStartMillis = remember { nextSaturdayStartMillis() }
+            val notificationStatus = remember { currentNotificationPermissionStatus(this@MainActivity) }
             val savedTodayTasks by remember(todayStartMillis) {
                 taskViewModel.getTasksForDate(plannedDate = todayStartMillis)
             }.collectAsState(initial = emptyList())
@@ -110,6 +113,9 @@ class MainActivity : ComponentActivity() {
                     monthLabel = currentMonthRange.label,
                     yearOrbitSummary = yearOrbitSummary,
                     rescueTasks = rescueTaskPreviews,
+                    settingsNotificationStatusTitle = notificationStatus.title,
+                    settingsNotificationStatusBody = notificationStatus.body,
+                    settingsNotificationNeedsAttention = notificationStatus.needsAttention,
                     onAddTask = { title, linkedMission, energyLabel ->
                         taskViewModel.addTaskFromInput(
                             title = title,
@@ -161,6 +167,9 @@ private fun OrbitPlannerStaticApp(
     monthLabel: String = "May 2026",
     yearOrbitSummary: YearOrbitSummary? = null,
     rescueTasks: List<RescueTaskPreview> = emptyList(),
+    settingsNotificationStatusTitle: String = "Permission needed",
+    settingsNotificationStatusBody: String = "Orbit Planner can send one gentle daily reminder when pending tasks exist.",
+    settingsNotificationNeedsAttention: Boolean = true,
     onAddTask: (title: String, linkedMission: String?, energyLabel: String) -> Unit = { _, _, _ -> },
     onToggleTaskComplete: (taskId: Long) -> Unit = {},
     onDeleteTask: (taskId: Long) -> Unit = {},
@@ -199,6 +208,9 @@ private fun OrbitPlannerStaticApp(
 
         TAB_SETTINGS -> SettingsPlaceholderScreen(
             modifier = modifier,
+            notificationStatusTitle = settingsNotificationStatusTitle,
+            notificationStatusBody = settingsNotificationStatusBody,
+            notificationStatusNeedsAttention = settingsNotificationNeedsAttention,
             onBottomNavSelected = onTabSelected
         )
 
@@ -232,6 +244,12 @@ private const val TAB_YEAR = "Year"
 private const val TAB_SETTINGS = "Settings"
 private const val TAB_RESCUE = "Rescue"
 
+private data class NotificationStatusUi(
+    val title: String,
+    val body: String,
+    val needsAttention: Boolean
+)
+
 private data class WeekRange(
     val startMillis: Long,
     val endMillis: Long,
@@ -249,6 +267,31 @@ private data class YearRange(
     val endMillis: Long,
     val label: String
 )
+
+private fun currentNotificationPermissionStatus(context: Context): NotificationStatusUi {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        return NotificationStatusUi(
+            title = "Not required on this Android version",
+            body = "Orbit Planner can send one gentle daily reminder when pending tasks exist.",
+            needsAttention = false
+        )
+    }
+
+    val hasPermission = NotificationHelper.hasPostNotificationsPermission(context)
+    return if (hasPermission) {
+        NotificationStatusUi(
+            title = "Notifications allowed",
+            body = "Orbit Planner can send one gentle daily reminder when pending tasks exist.",
+            needsAttention = false
+        )
+    } else {
+        NotificationStatusUi(
+            title = "Permission needed",
+            body = "Notifications are off for Orbit Planner. The app still works normally.",
+            needsAttention = true
+        )
+    }
+}
 
 private fun TaskEntity.toTodayTaskPreview(): TodayTaskPreview {
     val missionLabel = linkedMission?.takeIf { it.isNotBlank() }
