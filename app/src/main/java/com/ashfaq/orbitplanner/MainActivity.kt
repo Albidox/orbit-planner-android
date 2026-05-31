@@ -21,6 +21,7 @@ import com.ashfaq.orbitplanner.data.local.TaskEntity
 import com.ashfaq.orbitplanner.data.repository.TaskRepository
 import com.ashfaq.orbitplanner.notifications.NotificationHelper
 import com.ashfaq.orbitplanner.notifications.PendingTaskReminderScheduler
+import com.ashfaq.orbitplanner.settings.AppSettingsStore
 import com.ashfaq.orbitplanner.ui.screens.MonthTaskPreview
 import com.ashfaq.orbitplanner.ui.screens.MonthScreen
 import com.ashfaq.orbitplanner.ui.screens.RescueModePlaceholderScreen
@@ -46,7 +47,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         NotificationHelper.createPendingTaskReminderChannel(this)
-        PendingTaskReminderScheduler.scheduleDailyReminder(this)
+        val appSettingsStore = AppSettingsStore(applicationContext)
+        updateDailyReminderSchedule(
+            context = this,
+            isDailyReminderEnabled = appSettingsStore.isDailyReminderEnabled()
+        )
 
         val database = DatabaseProvider.getDatabase(applicationContext)
         val taskRepository = TaskRepository(database.taskDao())
@@ -63,6 +68,9 @@ class MainActivity : ComponentActivity() {
             val tomorrowStartMillis = remember { currentTomorrowStartMillis() }
             val weekendStartMillis = remember { nextSaturdayStartMillis() }
             val notificationStatus = remember { currentNotificationPermissionStatus(this@MainActivity) }
+            var dailyReminderEnabled by remember {
+                mutableStateOf(appSettingsStore.isDailyReminderEnabled())
+            }
             val savedTodayTasks by remember(todayStartMillis) {
                 taskViewModel.getTasksForDate(plannedDate = todayStartMillis)
             }.collectAsState(initial = emptyList())
@@ -116,6 +124,7 @@ class MainActivity : ComponentActivity() {
                     settingsNotificationStatusTitle = notificationStatus.title,
                     settingsNotificationStatusBody = notificationStatus.body,
                     settingsNotificationNeedsAttention = notificationStatus.needsAttention,
+                    settingsDailyReminderEnabled = dailyReminderEnabled,
                     onAddTask = { title, linkedMission, energyLabel ->
                         taskViewModel.addTaskFromInput(
                             title = title,
@@ -150,6 +159,14 @@ class MainActivity : ComponentActivity() {
                     },
                     onRescueDeleteTask = { taskId ->
                         taskViewModel.deleteTaskById(taskId)
+                    },
+                    onSettingsDailyReminderEnabledChange = { isEnabled ->
+                        dailyReminderEnabled = isEnabled
+                        appSettingsStore.setDailyReminderEnabled(isEnabled)
+                        updateDailyReminderSchedule(
+                            context = this@MainActivity,
+                            isDailyReminderEnabled = isEnabled
+                        )
                     }
                 )
             }
@@ -170,13 +187,15 @@ private fun OrbitPlannerStaticApp(
     settingsNotificationStatusTitle: String = "Permission needed",
     settingsNotificationStatusBody: String = "Orbit Planner can send one gentle daily reminder when pending tasks exist.",
     settingsNotificationNeedsAttention: Boolean = true,
+    settingsDailyReminderEnabled: Boolean = true,
     onAddTask: (title: String, linkedMission: String?, energyLabel: String) -> Unit = { _, _, _ -> },
     onToggleTaskComplete: (taskId: Long) -> Unit = {},
     onDeleteTask: (taskId: Long) -> Unit = {},
     onRescueDoToday: (taskId: Long) -> Unit = {},
     onRescueMoveTomorrow: (taskId: Long) -> Unit = {},
     onRescueMoveWeekend: (taskId: Long) -> Unit = {},
-    onRescueDeleteTask: (taskId: Long) -> Unit = {}
+    onRescueDeleteTask: (taskId: Long) -> Unit = {},
+    onSettingsDailyReminderEnabledChange: (Boolean) -> Unit = {}
 ) {
     // Temporary Phase 3G tab state. Real Navigation Compose will replace this later.
     var selectedTab by remember { mutableStateOf(TAB_TODAY) }
@@ -211,6 +230,8 @@ private fun OrbitPlannerStaticApp(
             notificationStatusTitle = settingsNotificationStatusTitle,
             notificationStatusBody = settingsNotificationStatusBody,
             notificationStatusNeedsAttention = settingsNotificationNeedsAttention,
+            dailyReminderEnabled = settingsDailyReminderEnabled,
+            onDailyReminderEnabledChange = onSettingsDailyReminderEnabledChange,
             onBottomNavSelected = onTabSelected
         )
 
@@ -290,6 +311,18 @@ private fun currentNotificationPermissionStatus(context: Context): NotificationS
             body = "Notifications are off for Orbit Planner. The app still works normally.",
             needsAttention = true
         )
+    }
+}
+
+private fun updateDailyReminderSchedule(
+    context: Context,
+    isDailyReminderEnabled: Boolean
+) {
+    val canShowNotifications = NotificationHelper.hasPostNotificationsPermission(context)
+    if (isDailyReminderEnabled && canShowNotifications) {
+        PendingTaskReminderScheduler.scheduleDailyReminder(context)
+    } else {
+        PendingTaskReminderScheduler.cancelDailyReminder(context)
     }
 }
 

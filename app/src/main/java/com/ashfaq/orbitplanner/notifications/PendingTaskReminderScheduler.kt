@@ -26,6 +26,10 @@ object PendingTaskReminderScheduler {
         )
     }
 
+    fun cancelDailyReminder(context: Context) {
+        WorkManager.getInstance(context).cancelUniqueWork(DAILY_PENDING_TASK_WORK_NAME)
+    }
+
     private fun millisUntilNextReminderWindow(): Long {
         val now = Calendar.getInstance()
         val reminderTime = Calendar.getInstance().apply {

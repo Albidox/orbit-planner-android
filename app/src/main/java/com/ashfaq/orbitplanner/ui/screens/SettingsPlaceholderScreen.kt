@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -56,6 +57,8 @@ fun SettingsPlaceholderScreen(
     notificationStatusTitle: String = "Permission needed",
     notificationStatusBody: String = "Orbit Planner can send one gentle daily reminder when pending tasks exist.",
     notificationStatusNeedsAttention: Boolean = true,
+    dailyReminderEnabled: Boolean = true,
+    onDailyReminderEnabledChange: (Boolean) -> Unit = {},
     onBottomNavSelected: (String) -> Unit = {}
 ) {
     Box(
@@ -80,11 +83,10 @@ fun SettingsPlaceholderScreen(
                 notificationStatusNeedsAttention = notificationStatusNeedsAttention
             )
             Spacer(modifier = Modifier.height(18.dp))
-            SettingsPreviewCard(
-                marker = "02",
-                title = "Daily reminder",
-                body = "One gentle daily reminder can appear when pending tasks exist.",
-                accentColor = OrbitPrimaryAccent
+            SettingsReminderToggleCard(
+                isEnabled = dailyReminderEnabled,
+                notificationStatusNeedsAttention = notificationStatusNeedsAttention,
+                onEnabledChange = onDailyReminderEnabledChange
             )
             Spacer(modifier = Modifier.height(12.dp))
             SettingsPreviewCard(
@@ -101,7 +103,7 @@ fun SettingsPlaceholderScreen(
                 accentColor = OrbitSuccess
             )
             Spacer(modifier = Modifier.height(14.dp))
-            SettingsStatusOnlyNote()
+            SettingsReminderControlNote()
             Spacer(modifier = Modifier.height(18.dp))
             OrbitBottomNavigation(
                 selectedLabel = "Settings",
@@ -252,6 +254,87 @@ private fun SettingsOrbitDot(
 }
 
 @Composable
+private fun SettingsReminderToggleCard(
+    isEnabled: Boolean,
+    notificationStatusNeedsAttention: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val body = when {
+        !isEnabled -> "Daily pending-task reminder is off."
+        notificationStatusNeedsAttention -> "Reminder is on, but notification permission needs attention before it can run."
+        else -> "Daily pending-task reminder is on."
+    }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = OrbitSurfaceCard.copy(alpha = 0.94f),
+        border = BorderStroke(1.dp, OrbitOutline.copy(alpha = 0.78f)),
+        shadowElevation = 6.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = OrbitPrimaryAccent.copy(alpha = 0.16f),
+                border = BorderStroke(1.dp, OrbitPrimaryAccent.copy(alpha = 0.7f))
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .height(28.dp)
+                        .width(38.dp)
+                ) {
+                    Text(
+                        text = "02",
+                        color = OrbitPrimaryAccent,
+                        maxLines = 1,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 12.sp
+                        )
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Daily reminder",
+                    color = OrbitTextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        lineHeight = 17.sp
+                    )
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = body,
+                    color = OrbitTextSecondary,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 10.sp,
+                        lineHeight = 13.sp
+                    )
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Switch(
+                checked = isEnabled,
+                onCheckedChange = onEnabledChange
+            )
+        }
+    }
+}
+
+@Composable
 private fun SettingsPreviewCard(
     marker: String,
     title: String,
@@ -323,7 +406,7 @@ private fun SettingsPreviewCard(
 }
 
 @Composable
-private fun SettingsStatusOnlyNote(modifier: Modifier = Modifier) {
+private fun SettingsReminderControlNote(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -337,7 +420,7 @@ private fun SettingsStatusOnlyNote(modifier: Modifier = Modifier) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Status only",
+                    text = "Reminder control",
                     color = OrbitPrimaryAccent,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -349,7 +432,7 @@ private fun SettingsStatusOnlyNote(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(5.dp))
                 Text(
-                    text = "No toggles, permission requests, or schedule changes in this phase.",
+                    text = "This switch only controls the daily pending-task reminder.",
                     color = OrbitTextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -372,7 +455,7 @@ private fun SettingsStatusOnlyNote(modifier: Modifier = Modifier) {
                         .padding(horizontal = 10.dp)
                 ) {
                     Text(
-                        text = "Read-only",
+                        text = "Saved",
                         color = OrbitTextMuted,
                         maxLines = 1,
                         style = MaterialTheme.typography.labelMedium.copy(
