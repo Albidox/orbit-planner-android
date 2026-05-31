@@ -91,16 +91,23 @@ fun SettingsPlaceholderScreen(
             Spacer(modifier = Modifier.height(12.dp))
             SettingsPreviewCard(
                 marker = "03",
-                title = "Local-first planner",
-                body = "Tasks stay on this device. No login or cloud sync is active.",
+                title = "Orbit Planner",
+                body = "Version: Early local preview.",
                 accentColor = OrbitSecondaryAccent
             )
             Spacer(modifier = Modifier.height(12.dp))
             SettingsPreviewCard(
                 marker = "04",
-                title = "App info",
-                body = "Orbit Planner version 1.0. Built for calm daily planning.",
+                title = "Local data",
+                body = "Your tasks are stored locally on this device.",
                 accentColor = OrbitSuccess
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            SettingsPreviewCard(
+                marker = "05",
+                title = "No cloud account",
+                body = "No login or cloud sync is enabled yet.",
+                accentColor = OrbitEnergy
             )
             Spacer(modifier = Modifier.height(14.dp))
             SettingsReminderControlNote()
@@ -163,7 +170,7 @@ private fun SettingsHeader(modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "Notification status and app info",
+            text = "Notifications, app info, and local data",
             color = OrbitTextSecondary,
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontSize = 11.sp,
