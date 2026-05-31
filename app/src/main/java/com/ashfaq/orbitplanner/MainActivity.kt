@@ -203,7 +203,8 @@ private fun OrbitPlannerStaticApp(
             onDoToday = onRescueDoToday,
             onMoveTomorrow = onRescueMoveTomorrow,
             onMoveWeekend = onRescueMoveWeekend,
-            onDeleteTask = onRescueDeleteTask
+            onDeleteTask = onRescueDeleteTask,
+            onBottomNavSelected = onTabSelected
         )
 
         else -> TodayScreen(

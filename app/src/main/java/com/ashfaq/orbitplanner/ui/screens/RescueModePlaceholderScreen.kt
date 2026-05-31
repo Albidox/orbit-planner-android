@@ -74,7 +74,8 @@ fun RescueModePlaceholderScreen(
     onDoToday: (taskId: Long) -> Unit = {},
     onMoveTomorrow: (taskId: Long) -> Unit = {},
     onMoveWeekend: (taskId: Long) -> Unit = {},
-    onDeleteTask: (taskId: Long) -> Unit = {}
+    onDeleteTask: (taskId: Long) -> Unit = {},
+    onBottomNavSelected: (String) -> Unit = {}
 ) {
     RescueModeScreen(
         modifier = modifier,
@@ -82,7 +83,8 @@ fun RescueModePlaceholderScreen(
         onDoToday = onDoToday,
         onMoveTomorrow = onMoveTomorrow,
         onMoveWeekend = onMoveWeekend,
-        onDeleteTask = onDeleteTask
+        onDeleteTask = onDeleteTask,
+        onBottomNavSelected = onBottomNavSelected
     )
 }
 
@@ -93,7 +95,8 @@ fun RescueModeScreen(
     onDoToday: (taskId: Long) -> Unit = {},
     onMoveTomorrow: (taskId: Long) -> Unit = {},
     onMoveWeekend: (taskId: Long) -> Unit = {},
-    onDeleteTask: (taskId: Long) -> Unit = {}
+    onDeleteTask: (taskId: Long) -> Unit = {},
+    onBottomNavSelected: (String) -> Unit = {}
 ) {
     var taskPendingDelete by remember { mutableStateOf<RescueTaskPreview?>(null) }
 
@@ -127,7 +130,10 @@ fun RescueModeScreen(
                 )
             }
             Spacer(modifier = Modifier.height(18.dp))
-            OrbitBottomNavigation(selectedLabel = "Today")
+            OrbitBottomNavigation(
+                selectedLabel = "Today",
+                onItemSelected = onBottomNavSelected
+            )
         }
 
         taskPendingDelete?.let { task ->
