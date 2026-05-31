@@ -212,6 +212,8 @@ private fun OrbitPlannerStaticApp(
             onAddTask = onAddTask,
             onToggleTaskComplete = onToggleTaskComplete,
             onDeleteTask = onDeleteTask,
+            rescueTaskCount = rescueTasks.size,
+            onOpenRescue = { selectedTab = TAB_RESCUE },
             onBottomNavSelected = onTabSelected
         )
     }

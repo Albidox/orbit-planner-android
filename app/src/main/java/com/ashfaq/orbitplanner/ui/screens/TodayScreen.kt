@@ -79,6 +79,8 @@ fun TodayScreen(
     onAddTask: (title: String, linkedMission: String?, energyLabel: String) -> Unit = { _, _, _ -> },
     onToggleTaskComplete: (taskId: Long) -> Unit = {},
     onDeleteTask: (taskId: Long) -> Unit = {},
+    rescueTaskCount: Int = 0,
+    onOpenRescue: () -> Unit = {},
     onBottomNavSelected: (String) -> Unit = {}
 ) {
     var isAddTaskDialogOpen by remember { mutableStateOf(false) }
@@ -116,8 +118,13 @@ fun TodayScreen(
                 }
             )
             Spacer(modifier = Modifier.height(20.dp))
-            RescueEntryCard()
-            Spacer(modifier = Modifier.height(14.dp))
+            if (rescueTaskCount > 0) {
+                RescueEntryCard(
+                    rescueTaskCount = rescueTaskCount,
+                    onOpenRescue = onOpenRescue
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+            }
             AddTaskAction(
                 onClick = {
                     showTitleError = false
@@ -593,9 +600,21 @@ private fun TaskStatusDot(color: Color) {
 }
 
 @Composable
-fun RescueEntryCard(modifier: Modifier = Modifier) {
+fun RescueEntryCard(
+    modifier: Modifier = Modifier,
+    rescueTaskCount: Int = 1,
+    onOpenRescue: () -> Unit = {}
+) {
+    val taskLabel = if (rescueTaskCount == 1) {
+        "1 unfinished task"
+    } else {
+        "$rescueTaskCount unfinished tasks"
+    }
+
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpenRescue),
         shape = RoundedCornerShape(22.dp),
         color = Color(0xFF151E32).copy(alpha = 0.98f),
         border = BorderStroke(1.dp, OrbitSecondaryAccent.copy(alpha = 0.54f)),
@@ -620,7 +639,7 @@ fun RescueEntryCard(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(5.dp))
                 Text(
-                    text = "1 unfinished task can be moved gently.",
+                    text = "$taskLabel can be moved gently.",
                     color = OrbitTextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -631,7 +650,7 @@ fun RescueEntryCard(modifier: Modifier = Modifier) {
                 )
             }
             Text(
-                text = "Conditional",
+                text = "Open",
                 color = OrbitSecondaryAccent,
                 textAlign = TextAlign.End,
                 style = MaterialTheme.typography.labelMedium.copy(
