@@ -44,6 +44,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE id = :taskId LIMIT 1")
     suspend fun getTaskById(taskId: Long): TaskEntity?
 
+    @Query("UPDATE tasks SET plannedDate = :newPlannedDate WHERE id = :taskId")
+    suspend fun updateTaskPlannedDate(taskId: Long, newPlannedDate: Long)
+
     @Query("DELETE FROM tasks WHERE id = :taskId")
     suspend fun deleteTaskById(taskId: Long)
 }

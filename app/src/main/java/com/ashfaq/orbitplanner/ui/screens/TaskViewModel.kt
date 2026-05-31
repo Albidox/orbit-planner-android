@@ -27,7 +27,8 @@ class TaskViewModel(
     fun addTaskFromInput(
         title: String,
         linkedMission: String?,
-        energyLabel: String = "Normal"
+        energyLabel: String = "Normal",
+        plannedDate: Long
     ) {
         val cleanTitle = title.trim()
         if (cleanTitle.isBlank()) return
@@ -38,7 +39,7 @@ class TaskViewModel(
             linkedMission = linkedMission?.trim()?.takeIf { it.isNotBlank() },
             energyLabel = energyLabel.trim().ifBlank { "Normal" },
             createdAt = now,
-            plannedDate = now,
+            plannedDate = plannedDate,
             orbitLevel = "Daily"
         )
 
@@ -59,6 +60,15 @@ class TaskViewModel(
     fun deleteTaskById(taskId: Long) {
         viewModelScope.launch {
             taskRepository.deleteTaskById(taskId)
+        }
+    }
+
+    fun moveTaskToDate(taskId: Long, newPlannedDate: Long) {
+        viewModelScope.launch {
+            taskRepository.updateTaskPlannedDate(
+                taskId = taskId,
+                newPlannedDate = newPlannedDate
+            )
         }
     }
 

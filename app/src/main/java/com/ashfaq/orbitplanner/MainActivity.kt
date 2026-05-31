@@ -53,7 +53,11 @@ class MainActivity : ComponentActivity() {
             val currentMonthRange = remember { currentMonthRangeMillis() }
             val currentYearRange = remember { currentYearRangeMillis() }
             val todayStartMillis = remember { currentDayStartMillis() }
-            val savedTasks by taskViewModel.allTasks.collectAsState(initial = emptyList())
+            val tomorrowStartMillis = remember { currentTomorrowStartMillis() }
+            val weekendStartMillis = remember { nextSaturdayStartMillis() }
+            val savedTodayTasks by remember(todayStartMillis) {
+                taskViewModel.getTasksForDate(plannedDate = todayStartMillis)
+            }.collectAsState(initial = emptyList())
             val savedWeekTasks by remember(currentWeekRange) {
                 taskViewModel.getTasksBetween(
                     startDate = currentWeekRange.startMillis,
@@ -75,7 +79,7 @@ class MainActivity : ComponentActivity() {
             val savedRescueTasks by remember(todayStartMillis) {
                 taskViewModel.getRescueCandidateTasks(beforeDate = todayStartMillis)
             }.collectAsState(initial = emptyList())
-            val todayTaskPreviews = savedTasks.map { task ->
+            val todayTaskPreviews = savedTodayTasks.map { task ->
                 task.toTodayTaskPreview()
             }
             val weekTaskPreviews = savedWeekTasks.map { task ->
@@ -105,13 +109,35 @@ class MainActivity : ComponentActivity() {
                         taskViewModel.addTaskFromInput(
                             title = title,
                             linkedMission = linkedMission,
-                            energyLabel = energyLabel
+                            energyLabel = energyLabel,
+                            plannedDate = todayStartMillis
                         )
                     },
                     onToggleTaskComplete = { taskId ->
                         taskViewModel.toggleTaskCompleted(taskId)
                     },
                     onDeleteTask = { taskId ->
+                        taskViewModel.deleteTaskById(taskId)
+                    },
+                    onRescueDoToday = { taskId ->
+                        taskViewModel.moveTaskToDate(
+                            taskId = taskId,
+                            newPlannedDate = todayStartMillis
+                        )
+                    },
+                    onRescueMoveTomorrow = { taskId ->
+                        taskViewModel.moveTaskToDate(
+                            taskId = taskId,
+                            newPlannedDate = tomorrowStartMillis
+                        )
+                    },
+                    onRescueMoveWeekend = { taskId ->
+                        taskViewModel.moveTaskToDate(
+                            taskId = taskId,
+                            newPlannedDate = weekendStartMillis
+                        )
+                    },
+                    onRescueDeleteTask = { taskId ->
                         taskViewModel.deleteTaskById(taskId)
                     }
                 )
@@ -132,7 +158,11 @@ private fun OrbitPlannerStaticApp(
     rescueTasks: List<RescueTaskPreview> = emptyList(),
     onAddTask: (title: String, linkedMission: String?, energyLabel: String) -> Unit = { _, _, _ -> },
     onToggleTaskComplete: (taskId: Long) -> Unit = {},
-    onDeleteTask: (taskId: Long) -> Unit = {}
+    onDeleteTask: (taskId: Long) -> Unit = {},
+    onRescueDoToday: (taskId: Long) -> Unit = {},
+    onRescueMoveTomorrow: (taskId: Long) -> Unit = {},
+    onRescueMoveWeekend: (taskId: Long) -> Unit = {},
+    onRescueDeleteTask: (taskId: Long) -> Unit = {}
 ) {
     // Temporary Phase 3G tab state. Real Navigation Compose will replace this later.
     var selectedTab by remember { mutableStateOf(TAB_TODAY) }
@@ -169,7 +199,11 @@ private fun OrbitPlannerStaticApp(
 
         TAB_RESCUE -> RescueModePlaceholderScreen(
             modifier = modifier,
-            rescueTasks = rescueTasks
+            rescueTasks = rescueTasks,
+            onDoToday = onRescueDoToday,
+            onMoveTomorrow = onRescueMoveTomorrow,
+            onMoveWeekend = onRescueMoveWeekend,
+            onDeleteTask = onRescueDeleteTask
         )
 
         else -> TodayScreen(
@@ -320,6 +354,32 @@ private fun currentDayStartMillis(): Long {
     calendar.set(Calendar.MINUTE, 0)
     calendar.set(Calendar.SECOND, 0)
     calendar.set(Calendar.MILLISECOND, 0)
+
+    return calendar.timeInMillis
+}
+
+private fun currentTomorrowStartMillis(): Long {
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.HOUR_OF_DAY, 0)
+    calendar.set(Calendar.MINUTE, 0)
+    calendar.set(Calendar.SECOND, 0)
+    calendar.set(Calendar.MILLISECOND, 0)
+    calendar.add(Calendar.DAY_OF_MONTH, 1)
+
+    return calendar.timeInMillis
+}
+
+private fun nextSaturdayStartMillis(): Long {
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.HOUR_OF_DAY, 0)
+    calendar.set(Calendar.MINUTE, 0)
+    calendar.set(Calendar.SECOND, 0)
+    calendar.set(Calendar.MILLISECOND, 0)
+
+    val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+    val daysUntilSaturday = (Calendar.SATURDAY - dayOfWeek + 7) % 7
+    val daysToAdd = if (daysUntilSaturday == 0) 7 else daysUntilSaturday
+    calendar.add(Calendar.DAY_OF_MONTH, daysToAdd)
 
     return calendar.timeInMillis
 }

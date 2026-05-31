@@ -35,6 +35,10 @@ class TaskRepository(
         taskDao.updateTask(task)
     }
 
+    suspend fun updateTaskPlannedDate(taskId: Long, newPlannedDate: Long) {
+        taskDao.updateTaskPlannedDate(taskId, newPlannedDate)
+    }
+
     suspend fun deleteTask(task: TaskEntity) {
         taskDao.deleteTask(task)
     }

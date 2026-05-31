@@ -3,6 +3,7 @@ package com.ashfaq.orbitplanner.ui.screens
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -21,10 +22,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -62,19 +70,33 @@ data class RescueTaskPreview(
 @Composable
 fun RescueModePlaceholderScreen(
     modifier: Modifier = Modifier,
-    rescueTasks: List<RescueTaskPreview> = emptyList()
+    rescueTasks: List<RescueTaskPreview> = emptyList(),
+    onDoToday: (taskId: Long) -> Unit = {},
+    onMoveTomorrow: (taskId: Long) -> Unit = {},
+    onMoveWeekend: (taskId: Long) -> Unit = {},
+    onDeleteTask: (taskId: Long) -> Unit = {}
 ) {
     RescueModeScreen(
         modifier = modifier,
-        rescueTasks = rescueTasks
+        rescueTasks = rescueTasks,
+        onDoToday = onDoToday,
+        onMoveTomorrow = onMoveTomorrow,
+        onMoveWeekend = onMoveWeekend,
+        onDeleteTask = onDeleteTask
     )
 }
 
 @Composable
 fun RescueModeScreen(
     modifier: Modifier = Modifier,
-    rescueTasks: List<RescueTaskPreview> = emptyList()
+    rescueTasks: List<RescueTaskPreview> = emptyList(),
+    onDoToday: (taskId: Long) -> Unit = {},
+    onMoveTomorrow: (taskId: Long) -> Unit = {},
+    onMoveWeekend: (taskId: Long) -> Unit = {},
+    onDeleteTask: (taskId: Long) -> Unit = {}
 ) {
+    var taskPendingDelete by remember { mutableStateOf<RescueTaskPreview?>(null) }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -96,10 +118,27 @@ fun RescueModeScreen(
             if (rescueTasks.isEmpty()) {
                 RescueEmptyStatePreview()
             } else {
-                RescueTaskList(rescueTasks = rescueTasks)
+                RescueTaskList(
+                    rescueTasks = rescueTasks,
+                    onDoToday = onDoToday,
+                    onMoveTomorrow = onMoveTomorrow,
+                    onMoveWeekend = onMoveWeekend,
+                    onDeleteTaskRequested = { taskPendingDelete = it }
+                )
             }
             Spacer(modifier = Modifier.height(18.dp))
             OrbitBottomNavigation(selectedLabel = "Today")
+        }
+
+        taskPendingDelete?.let { task ->
+            DeleteRescueTaskDialog(
+                taskTitle = task.title,
+                onDismiss = { taskPendingDelete = null },
+                onConfirmDelete = {
+                    onDeleteTask(task.id)
+                    taskPendingDelete = null
+                }
+            )
         }
     }
 }
@@ -220,7 +259,11 @@ private fun RescueToneCard(modifier: Modifier = Modifier) {
 @Composable
 private fun RescueTaskList(
     rescueTasks: List<RescueTaskPreview>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onDoToday: (taskId: Long) -> Unit = {},
+    onMoveTomorrow: (taskId: Long) -> Unit = {},
+    onMoveWeekend: (taskId: Long) -> Unit = {},
+    onDeleteTaskRequested: (RescueTaskPreview) -> Unit = {}
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         rescueTasks.forEachIndexed { index, task ->
@@ -228,9 +271,14 @@ private fun RescueTaskList(
                 Spacer(modifier = Modifier.height(18.dp))
             }
             RescueTaskCard(
+                taskId = task.id,
                 marker = (index + 1).toString(),
                 title = task.title,
-                meta = "${task.plannedDateLabel} - ${task.linkedMission} - Energy: ${task.energyLabel}"
+                meta = "${task.plannedDateLabel} - ${task.linkedMission} - Energy: ${task.energyLabel}",
+                onDoToday = onDoToday,
+                onMoveTomorrow = onMoveTomorrow,
+                onMoveWeekend = onMoveWeekend,
+                onDeleteTask = { onDeleteTaskRequested(task) }
             )
         }
     }
@@ -238,10 +286,15 @@ private fun RescueTaskList(
 
 @Composable
 fun RescueTaskCard(
+    taskId: Long,
     marker: String,
     title: String,
     meta: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onDoToday: (taskId: Long) -> Unit = {},
+    onMoveTomorrow: (taskId: Long) -> Unit = {},
+    onMoveWeekend: (taskId: Long) -> Unit = {},
+    onDeleteTask: () -> Unit = {}
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -287,30 +340,29 @@ fun RescueTaskCard(
                     text = "Do today",
                     color = OrbitPrimaryAccent,
                     filled = true,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    onClick = { onDoToday(taskId) }
                 )
                 RescueActionChip(
-                    text = "Move tomorrow",
+                    text = "Tomorrow",
                     color = OrbitTextSecondary,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    onClick = { onMoveTomorrow(taskId) }
                 )
                 RescueActionChip(
-                    text = "Move weekend",
+                    text = "Weekend",
                     color = OrbitTextSecondary,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    onClick = { onMoveWeekend(taskId) }
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row {
                 RescueActionChip(
-                    text = "Convert to goal",
-                    color = OrbitSecondaryAccent,
-                    modifier = Modifier.weight(1.15f)
-                )
-                RescueActionChip(
-                    text = "Delete/cancel",
+                    text = "Delete",
                     color = OrbitQuietDanger,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onDeleteTask
                 )
             }
         }
@@ -322,10 +374,19 @@ fun RescueActionChip(
     text: String,
     color: Color,
     modifier: Modifier = Modifier,
-    filled: Boolean = false
+    filled: Boolean = false,
+    onClick: (() -> Unit)? = null
 ) {
+    val chipModifier = if (onClick == null) {
+        modifier.height(30.dp)
+    } else {
+        modifier
+            .height(30.dp)
+            .clickable(onClick = onClick)
+    }
+
     Surface(
-        modifier = modifier.height(30.dp),
+        modifier = chipModifier,
         shape = RoundedCornerShape(15.dp),
         color = if (filled) color.copy(alpha = 0.95f) else OrbitSurfaceRaised.copy(alpha = 0.7f),
         border = BorderStroke(1.dp, color.copy(alpha = 0.82f))
@@ -363,7 +424,7 @@ fun RescueEmptyStatePreview(modifier: Modifier = Modifier) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "All clear after rescue.",
+                    text = "Nothing needs rescue.",
                     color = OrbitTextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -375,7 +436,7 @@ fun RescueEmptyStatePreview(modifier: Modifier = Modifier) {
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "When the queue is empty, this space can stay quiet.",
+                    text = "Your recovery queue is clear. Today can stay light.",
                     color = OrbitTextSecondary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -387,12 +448,52 @@ fun RescueEmptyStatePreview(modifier: Modifier = Modifier) {
             }
             Spacer(modifier = Modifier.width(12.dp))
             RescueActionChip(
-                text = "No Rescue tab",
+                text = "All clear",
                 color = OrbitSecondaryAccent,
                 modifier = Modifier.width(108.dp)
             )
         }
     }
+}
+
+@Composable
+private fun DeleteRescueTaskDialog(
+    taskTitle: String,
+    onDismiss: () -> Unit,
+    onConfirmDelete: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = OrbitSurfaceCard,
+        titleContentColor = OrbitTextPrimary,
+        textContentColor = OrbitTextSecondary,
+        title = {
+            Text(text = "Delete this task?")
+        },
+        text = {
+            Column {
+                Text(
+                    text = "This removes it from your planner. You can choose another rescue option instead."
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = taskTitle,
+                    color = OrbitTextPrimary,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = onConfirmDelete) {
+                Text(text = "Delete task")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Keep task")
+            }
+        }
+    )
 }
 
 @Composable
