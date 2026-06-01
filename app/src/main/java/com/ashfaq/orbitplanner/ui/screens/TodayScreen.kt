@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -43,6 +44,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -416,7 +420,7 @@ private fun TaskListSection(
                     text = if (hasSavedTasks) {
                         "Saved local tasks from Room"
                     } else {
-                        "Sample cards: title, link, energy/status"
+                        "No saved tasks for today yet"
                     },
                     color = OrbitTextMuted,
                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -453,26 +457,42 @@ private fun TaskListSection(
                 )
             }
         } else {
-            StaticSampleTaskCards()
+            TodayEmptyStateCard()
         }
     }
 }
 
 @Composable
-private fun StaticSampleTaskCards() {
-    TaskPreviewCard(
-        title = "Draft project summary",
-        link = "Mission: Portfolio foundations",
-        status = "Normal",
-        statusColor = OrbitPrimaryAccent
-    )
-    Spacer(modifier = Modifier.height(12.dp))
-    TaskPreviewCard(
-        title = "Review Kotlin notes",
-        link = "Goal: Android career growth",
-        status = "Low",
-        statusColor = OrbitEnergy
-    )
+private fun TodayEmptyStateCard(modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = OrbitSurfaceCard.copy(alpha = 0.9f),
+        border = BorderStroke(1.dp, OrbitOutline.copy(alpha = 0.72f))
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp)
+        ) {
+            Text(
+                text = "Your day is clear.",
+                color = OrbitTextPrimary,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    lineHeight = 17.sp
+                )
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Add one small step when you are ready.",
+                color = OrbitTextSecondary,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 10.sp,
+                    lineHeight = 13.sp
+                )
+            )
+        }
+    }
 }
 
 private fun TodayTaskPreview.taskStatusColor(): Color {
@@ -515,7 +535,14 @@ fun TaskPreviewCard(
             } else {
                 Checkbox(
                     checked = isCompleted,
-                    onCheckedChange = { onToggleComplete() }
+                    onCheckedChange = { onToggleComplete() },
+                    modifier = Modifier.semantics {
+                        contentDescription = if (isCompleted) {
+                            "Mark $title incomplete"
+                        } else {
+                            "Mark $title complete"
+                        }
+                    }
                 )
             }
             Spacer(modifier = Modifier.width(14.dp))
@@ -555,7 +582,12 @@ fun TaskPreviewCard(
                 )
                 if (onDelete != null) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    TextButton(onClick = onDelete) {
+                    TextButton(
+                        onClick = onDelete,
+                        modifier = Modifier.semantics {
+                            contentDescription = "Delete task $title"
+                        }
+                    ) {
                         Text(
                             text = "Delete",
                             color = OrbitEnergy,
@@ -614,7 +646,11 @@ fun RescueEntryCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onOpenRescue),
+            .clickable(
+                onClickLabel = "Open Rescue Mode",
+                role = Role.Button,
+                onClick = onOpenRescue
+            ),
         shape = RoundedCornerShape(22.dp),
         color = Color(0xFF151E32).copy(alpha = 0.98f),
         border = BorderStroke(1.dp, OrbitSecondaryAccent.copy(alpha = 0.54f)),
@@ -703,12 +739,17 @@ fun AddTaskAction(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .heightIn(min = 48.dp)
+            .clickable(
+                onClickLabel = "Add task",
+                role = Role.Button,
+                onClick = onClick
+            ),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Empty state: show Add your first task card/button",
+            text = "Add a small task to start today's orbit.",
             color = OrbitTextMuted,
             maxLines = 2,
             style = MaterialTheme.typography.bodyMedium.copy(

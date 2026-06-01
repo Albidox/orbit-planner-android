@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -40,6 +41,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -350,13 +352,13 @@ fun RescueTaskCard(
                     onClick = { onDoToday(taskId) }
                 )
                 RescueActionChip(
-                    text = "Tomorrow",
+                    text = "Move tomorrow",
                     color = OrbitTextSecondary,
                     modifier = Modifier.weight(1f),
                     onClick = { onMoveTomorrow(taskId) }
                 )
                 RescueActionChip(
-                    text = "Weekend",
+                    text = "Move weekend",
                     color = OrbitTextSecondary,
                     modifier = Modifier.weight(1f),
                     onClick = { onMoveWeekend(taskId) }
@@ -384,11 +386,15 @@ fun RescueActionChip(
     onClick: (() -> Unit)? = null
 ) {
     val chipModifier = if (onClick == null) {
-        modifier.height(30.dp)
+        modifier.heightIn(min = 44.dp)
     } else {
         modifier
-            .height(30.dp)
-            .clickable(onClick = onClick)
+            .heightIn(min = 44.dp)
+            .clickable(
+                onClickLabel = text,
+                role = Role.Button,
+                onClick = onClick
+            )
     }
 
     Surface(

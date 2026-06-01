@@ -342,7 +342,7 @@ private fun MonthFocusGridCard(modifier: Modifier = Modifier) {
                         )
                     )
                 }
-                MonthChip(text = "Static", color = OrbitTextMuted, filled = false)
+                MonthChip(text = "Preview", color = OrbitTextMuted, filled = false)
             }
             Spacer(modifier = Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -444,7 +444,7 @@ private fun WeeklyMissionPreviewSection(
             text = if (hasRoomTasks) {
                 "Saved local tasks planned for this month"
             } else {
-                "Static preview of how this month breaks down"
+                "Planning preview until monthly tasks are added"
             },
             color = OrbitTextMuted,
             style = MaterialTheme.typography.bodyMedium.copy(

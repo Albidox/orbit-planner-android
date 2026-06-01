@@ -31,6 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -92,7 +94,7 @@ fun SettingsPlaceholderScreen(
             SettingsPreviewCard(
                 marker = "03",
                 title = "Orbit Planner",
-                body = "Version: Early local preview.",
+                body = "Version: Local MVP preview.",
                 accentColor = OrbitSecondaryAccent
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -106,7 +108,7 @@ fun SettingsPlaceholderScreen(
             SettingsPreviewCard(
                 marker = "05",
                 title = "No cloud account",
-                body = "No login or cloud sync is enabled yet.",
+                body = "This local MVP has no login or cloud sync.",
                 accentColor = OrbitEnergy
             )
             Spacer(modifier = Modifier.height(14.dp))
@@ -335,7 +337,14 @@ private fun SettingsReminderToggleCard(
             Spacer(modifier = Modifier.width(12.dp))
             Switch(
                 checked = isEnabled,
-                onCheckedChange = onEnabledChange
+                onCheckedChange = onEnabledChange,
+                modifier = Modifier.semantics {
+                    contentDescription = if (isEnabled) {
+                        "Daily reminder is on"
+                    } else {
+                        "Daily reminder is off"
+                    }
+                }
             )
         }
     }
@@ -441,7 +450,7 @@ private fun SettingsReminderControlNote(modifier: Modifier = Modifier) {
                 Text(
                     text = "This switch only controls the daily pending-task reminder.",
                     color = OrbitTextSecondary,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 9.sp,

@@ -317,7 +317,7 @@ private fun WeekStripCard(modifier: Modifier = Modifier) {
                         )
                     )
                 }
-                WeekChip(text = "Static", color = OrbitTextMuted, filled = false)
+                WeekChip(text = "Preview", color = OrbitTextMuted, filled = false)
             }
             Spacer(modifier = Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -395,7 +395,7 @@ private fun WeekTaskPreviewSection(
             text = if (hasRoomTasks) {
                 "Saved local tasks planned for this week"
             } else {
-                "Static preview of work connected to this week"
+                "Planning preview until weekly tasks are added"
             },
             color = OrbitTextMuted,
             style = MaterialTheme.typography.bodyMedium.copy(
