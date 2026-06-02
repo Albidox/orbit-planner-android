@@ -67,21 +67,17 @@ The current app keeps the architecture intentionally simple so the MVP stays rea
 - Rescue Mode: recover overdue incomplete tasks by moving them to today, tomorrow, the weekend, or deleting them with confirmation.
 - Settings: view notification status, toggle the daily reminder, and read local data/no-cloud information.
 
-## Screenshots and Demo
+## Screenshots
 
-Screenshots will be added after the demo asset capture step in Phase 11C.
+Real screenshots from the local/offline MVP, captured from the running app:
 
-Planned demo assets:
+| Today | Completed Task | Week |
+| --- | --- | --- |
+| ![Today screen](docs/assets/screenshots/today-screen.png) | ![Completed task state](docs/assets/screenshots/Screenshot_2026-06-02-13-33-30-87_368c2d5cf720b2e3669aec7845852218.jpg) | ![Week screen](docs/assets/screenshots/Screenshot_2026-06-02-13-33-38-70_368c2d5cf720b2e3669aec7845852218.jpg) |
 
-- Today screen.
-- Add task dialog.
-- Task completed state.
-- Week screen.
-- Month screen.
-- Year Orbit screen.
-- Rescue Mode screen.
-- Settings screen.
-- Notification/reminder setting.
+| Month | Year Orbit | Settings |
+| --- | --- | --- |
+| ![Month screen](docs/assets/screenshots/Screenshot_2026-06-02-13-33-54-24_368c2d5cf720b2e3669aec7845852218.jpg) | ![Year Orbit screen](docs/assets/screenshots/Screenshot_2026-06-02-13-34-03-40_368c2d5cf720b2e3669aec7845852218.jpg) | ![Settings screen](docs/assets/screenshots/Screenshot_2026-06-02-13-34-13-55_368c2d5cf720b2e3669aec7845852218.jpg) |
 
 ## How to Run Locally
 
